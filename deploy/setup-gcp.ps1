@@ -90,8 +90,9 @@ Invoke-Gcloud services enable `
 $repositories = Get-GcloudValue artifacts repositories list `
     --project $ProjectId `
     --location $Region `
-    --format="value(repositoryId)"
-if ([regex]::Split($repositories, "\r?\n") -notcontains $Repository) {
+    --format="value(name)"
+$expectedRepositoryName = "projects/$ProjectId/locations/$Region/repositories/$Repository"
+if ([regex]::Split($repositories, "\r?\n") -notcontains $expectedRepositoryName) {
     Invoke-Gcloud artifacts repositories create $Repository `
         --project $ProjectId `
         --location $Region `
