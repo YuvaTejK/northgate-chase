@@ -81,4 +81,4 @@ The test suite covers date-derived document status, reminder approval/schedule/s
 
 ## Deploy to Google Cloud
 
-The GitHub Actions workflow in `.github/workflows/ci.yml` runs the application tests, builds the frontend and Docker image, and validates Terraform on pull requests. The separate `.github/workflows/deploy.yml` runs those same checks before deployment and deploys to Cloud Run only when explicitly enabled after the GCP foundation is configured. Follow [CI.md](./CI.md) for CI and [DEPLOYMENT.md](./DEPLOYMENT.md) for the restricted, synthetic-data-only GCP CD setup.
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs the application tests, frontend build, and Docker build. The separate `.github/workflows/deploy.yml` runs those checks before deploying the single-container app to Cloud Run with `gcloud` and GitHub Workload Identity Federation; Terraform is not used by CD. Follow [CI.md](./CI.md) for CI and [DEPLOYMENT.md](./DEPLOYMENT.md) for the restricted, synthetic-data-only GCP CD setup.

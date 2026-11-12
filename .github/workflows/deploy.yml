@@ -67,24 +67,43 @@ jobs:
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
         id: image
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9.8
-
-      - name: Initialize Terraform remote state
-        run: terraform -chdir=terraform init -input=false -backend-config="bucket=northgate-${PROJECT_ID}-tfstate" -backend-config="prefix=northgate-chase"
-
-      - name: Verify GCP resource restrictions
-        run: python terraform/check_restrictions.py
-
-      - name: Plan infrastructure and application deployment
+      - name: Deploy to Cloud Run
         env:
           IMAGE: ${{ steps.image.outputs.image }}
-        run: terraform -chdir=terraform plan -input=false -var="project_id=$PROJECT_ID" -var="image=$IMAGE" -out=northgate.tfplan
+          RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
+        run: |
+          test -n "$RUNTIME_SERVICE_ACCOUNT"
+          gcloud run deploy northgate-chase \
+            --image "$IMAGE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+            --port 8080 \
+            --cpu 1 \
+            --memory 1Gi \
+            --min 0 \
+            --max 1 \
+            --concurrency 20 \
+            --set-env-vars "DATABASE_PATH=/tmp/northgate.sqlite,HOST=0.0.0.0,ASSISTANT_PORT=4175,GCP_PROJECT_ID=$PROJECT_ID,VERTEX_AI_ENABLED=true,VERTEX_AI_LOCATION=global,GEMINI_MODEL=gemini-3-flash-preview,NORTHGATE_DEMO_AUTH_ENABLED=true,NORTHGATE_COOKIE_SECURE=true,NORTHGATE_SESSION_TTL_SECONDS=28800" \
+            --set-secrets "NORTHGATE_SESSION_SECRET=northgate-session-secret:latest" \
+            --quiet
 
-      - name: Apply infrastructure and application deployment
-        run: terraform -chdir=terraform apply -input=false -auto-approve northgate.tfplan
+          SERVICE_URL="$(gcloud run services describe northgate-chase \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --format='value(status.url)')"
+          test -n "$SERVICE_URL"
+          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
+        id: deploy
 
-      - name: Show deployed URL
-        run: terraform -chdir=terraform output -raw cloud_run_url
+      - name: Deployment summary
+        env:
+          SERVICE_URL: ${{ steps.deploy.outputs.service_url }}
+        run: |
+          echo "### Northgate Chase deployed to Cloud Run" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Region: \`$REGION\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Service: [$SERVICE_URL]($SERVICE_URL)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Health: [$SERVICE_URL/api/health]($SERVICE_URL/api/health)" >> "$GITHUB_STEP_SUMMARY"
