@@ -136,7 +136,8 @@ $secretName = Get-GcloudValue secrets list --project $ProjectId --filter="name:n
 if (-not $secretName) {
     Invoke-Gcloud secrets create northgate-session-secret `
         --project $ProjectId `
-        --replication-policy automatic
+        --replication-policy user-managed `
+        --locations $Region
 }
 Invoke-Gcloud secrets add-iam-policy-binding northgate-session-secret `
     --project $ProjectId `
