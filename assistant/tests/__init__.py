@@ -1,0 +1,1 @@
+"""Northgate Chase assistant tests."""

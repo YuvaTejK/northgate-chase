@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-tertiary":"#ffffff","surface-variant":"#d3e4fe","on-tertiary-container":"#4c7eff","on-primary-container":"#7886a3","secondary-fixed-dim":"#b9c7e0","on-secondary-fixed":"#0d1c2f","on-background":"#0b1c30","surface-bright":"#f8f9ff","surface-container-lowest":"#ffffff","on-primary-fixed":"#0c1b33","outline-variant":"#c5c6ce","on-secondary-container":"#57657b","surface-container":"#e5eeff","on-surface-variant":"#44474d","primary":"#000412","inverse-surface":"#213145","outline":"#75777e","surface-container-high":"#dce9ff","tertiary-fixed":"#dbe1ff","error-container":"#ffdad6","inverse-primary":"#b8c7e6","on-secondary-fixed-variant":"#3a485c","surface-container-low":"#eff4ff","surface-container-highest":"#d3e4fe","on-secondary":"#ffffff","surface-dim":"#cbdbf5","on-surface":"#0b1c30","on-primary":"#ffffff","background":"#f8f9ff","error":"#ba1a1a","on-tertiary-fixed-variant":"#003ea8","on-error-container":"#93000a","surface":"#f8f9ff","on-error":"#ffffff","inverse-on-surface":"#eaf1ff","tertiary-container":"#001950","surface-tint":"#515f7a","secondary-fixed":"#d5e3fd","secondary":"#515f74","tertiary-fixed-dim":"#b4c5ff","on-tertiary-fixed":"#00174b","secondary-container":"#d5e3fd","primary-fixed-dim":"#b8c7e6","tertiary":"#000315","primary-container":"#0f1e36","on-primary-fixed-variant":"#394761","primary-fixed":"#d7e3ff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter":"1rem","space-sm":"0.5rem","margin":"1.5rem","space-md":"0.75rem","space-xl":"1.5rem","space-xs":"0.25rem","space-lg":"1rem"},"fontFamily":{"body-md":["Inter"],"body-sm":["Inter"],"headline-xl":["Inter"],"body-lg":["Inter"],"headline-md":["Inter"],"tabular-data":["Inter"],"headline-lg":["Inter"],"label-sm":["Inter"],"label-md":["Inter"]},"fontSize":{"body-md":["0.875rem",{"lineHeight":"1.25rem","fontWeight":"400"}],"body-sm":["0.8125rem",{"lineHeight":"1.125rem","fontWeight":"400"}],"headline-xl":["1.75rem",{"lineHeight":"2.25rem","letterSpacing":"-0.02em","fontWeight":"600"}],"body-lg":["0.9375rem",{"lineHeight":"1.375rem","fontWeight":"400"}],"headline-md":["1rem",{"lineHeight":"1.5rem","letterSpacing":"-0.01em","fontWeight":"600"}],"tabular-data":["0.8125rem",{"lineHeight":"1.125rem","fontWeight":"500"}],"headline-lg":["1.25rem",{"lineHeight":"1.75rem","letterSpacing":"-0.015em","fontWeight":"600"}],"label-sm":["0.6875rem",{"lineHeight":"0.875rem","letterSpacing":"0.05em","fontWeight":"600"}],"label-md":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.04em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 flex flex-col"><div class="h-16 bg-primary-container text-on-primary border-b border-inverse-surface/40 px-margin flex items-center justify-between gap-space-lg"><div class="flex items-center gap-space-lg shrink-0"><img alt="Northgate Chase Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrDTCo6otk1bvTspGWjJyinh5zYaG6MLXmFaHoNEejM5NzGMQP1HQiSprrfstDOOD2My5DYEUsimfhE5xhZ5w-sB1lxrPcqPyQPo_H-CvdsKTR6wgIYVlowLQGAyQG9xjHlorYI9WJY1DO2oyoeFDfO2M4grB4hImgPIkC-afk_OI7zRdIOmyMUwEuoo70at98gHf0Dhq5cloWT3n9RkseeB6VkGdYMRnGweb_Ba4f0"/><div class="h-5 w-px bg-outline/40"></div><span class="font-headline-md text-headline-md tracking-tight text-on-primary whitespace-nowrap">Northgate Chase</span><span class="hidden xl:inline-flex items-center px-space-sm py-0.5 rounded bg-tertiary-container text-secondary-fixed text-label-sm font-label-sm uppercase tracking-wider border border-secondary-fixed/20">KYC Chase Workspace - 400 Inflow/Mo</span></div><div class="flex-1 max-w-xl mx-space-lg hidden md:block"><div class="relative flex items-center w-full"><span class="material-symbols-outlined absolute left-space-md text-outline-variant text-[18px]">search</span><input class="w-full pl-9 pr-space-md py-1.5 bg-inverse-surface/60 border border-outline/30 rounded text-body-sm font-body-sm text-on-primary placeholder:text-outline-variant focus:outline-none focus:border-secondary-fixed focus:bg-inverse-surface" placeholder="Search client name, NG-2026-XXXX, or RM..." type="text"/></div></div><div class="flex items-center gap-space-lg shrink-0"><button class="relative p-1.5 rounded hover:bg-inverse-surface text-outline-variant hover:text-on-primary transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error ring-2 ring-primary-container"></span></button><div class="hidden lg:flex items-center px-space-sm py-1 bg-inverse-surface/80 rounded border border-outline/30 text-label-sm font-label-sm uppercase tracking-wider text-secondary-fixed"><span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container mr-1.5 animate-pulse"></span>PROD-EU-EAST</div><div class="h-5 w-px bg-outline/40 hidden lg:block"></div><div class="flex items-center gap-space-md pl-1"><div class="text-right hidden sm:block"><div class="font-label-md text-label-md text-on-primary leading-tight">Marcus Vance</div><div class="font-label-sm text-label-sm text-outline-variant">Senior RM & KYC Lead</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="material-symbols-outlined text-outline-variant text-[18px] cursor-pointer hover:text-on-primary">arrow_drop_down</span></div></div></div><div class="h-12 bg-surface-container-lowest border-b border-outline-variant/40 px-margin flex items-center justify-between gap-space-lg shadow-[0_1px_3px_rgba(15,30,54,0.06)]"><nav class="flex items-center gap-space-lg h-full overflow-x-auto shrink-0" data-active-classes="border-b-2 border-primary text-primary font-headline-md"><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-colors whitespace-nowrap" data-path="chase-queue" href="#">Chase Queue<span class="ml-1.5 px-1.5 py-0.5 rounded text-label-sm font-label-sm bg-error-container text-on-error-container">28 Open / 9 Overdue</span></a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-colors whitespace-nowrap" data-path="case-detail" href="#">Case Detail (Apex Global)</a><a aria-current="page" class="h-full flex items-center px-space-xs transition-colors whitespace-nowrap border-b-2 border-primary text-primary font-headline-md" data-path="reminder-composer" href="#">Reminder Composer</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-colors whitespace-nowrap" data-path="stage-analytics" href="#">Stage Analytics</a><a class="h-full flex items-center px-space-xs text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface border-b-2 border-transparent transition-colors whitespace-nowrap" data-path="analyst-handoff" href="#">Analyst Handoff</a></nav><div class="flex items-center gap-space-md shrink-0"><div class="hidden xl:flex items-center text-label-sm font-label-sm text-on-surface-variant pr-space-md border-r border-outline-variant/40"><span class="w-1.5 h-1.5 rounded-full bg-outline mr-1.5"></span>Last sync: 2 mins ago • Auto-send disabled (RM Review Enforcement Active)</div><div class="flex items-center gap-space-xs"><button class="px-space-md py-1.5 rounded bg-surface-container border border-outline-variant/60 hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors" type="button">Export Queue CSV</button><button class="px-space-md py-1.5 rounded bg-surface-container-high border border-secondary/40 hover:bg-secondary-container text-on-surface font-label-md text-label-md transition-colors" type="button">Run Overdue Chase Batch</button><button class="px-space-md py-1.5 rounded bg-primary-container hover:bg-primary text-on-primary font-label-md text-label-md transition-colors flex items-center gap-1" type="button"><span class="material-symbols-outlined text-[16px]">add</span>New Intake Item</button></div></div></div></header><main class="w-full pt-28 bg-surface flex-1"><div class="flex flex-col w-full">
+<!-- Prominent Regulatory Review Banner -->
+<div class="bg-surface-container-high px-margin py-space-md border-l-4 border-error flex items-start gap-space-md shadow-sm">
+<span class="material-symbols-outlined text-error text-[22px] shrink-0 mt-0.5" style="font-variation-settings: 'FILL' 1;">warning</span>
+<div class="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-space-xs">
+<div>
+<div class="font-headline-md text-headline-md text-on-surface uppercase tracking-wider flex items-center gap-space-xs">
+<span>Draft for RM Review Only</span>
+<span class="text-label-sm font-label-sm px-1.5 py-0.5 rounded bg-error-container text-on-error-container font-semibold">Strict Air-Gap Enforced</span>
+</div>
+<p class="font-body-sm text-text-body-sm text-on-surface-variant mt-0.5">
+          Relationship Managers retain strict sign-off authority under MiFID-II & EU-AML-6. No email will leave the bank until Marcus Vance explicitly clicks “Approve and Send”.
+        </p>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<span class="font-tabular-data text-tabular-data text-on-surface-variant px-space-sm py-1 bg-surface-container rounded">Case: NG-2026-0842</span>
+<span class="font-label-sm text-label-sm text-error font-semibold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-error animate-ping"></span>
+          Auto-Send Suppressed
+        </span>
+</div>
+</div>
+</div>
+<!-- Breadcrumbs & Quick Context Strip -->
+<div class="bg-surface-container-lowest px-margin py-space-sm border-b border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-space-sm font-label-md text-label-md text-on-surface-variant">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+        Back to Case: Apex Global Holdings Ltd
+      </a>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface font-semibold">Reminder Composer (3 Missing Documents)</span>
+<span class="px-1.5 py-0.5 rounded bg-tertiary-container text-secondary-fixed text-label-sm font-label-sm uppercase">Batch Chase Mode</span>
+</div>
+<div class="flex items-center gap-space-md text-label-sm font-label-sm text-on-surface-variant">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-outline">verified_user</span>
+        Signer Authenticated: M. Vance (ID: NV-88914)
+      </span>
+<span class="h-3 w-px bg-outline-variant/50"></span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-outline">timer</span>
+        Session Expiry: 48m
+      </span>
+</div>
+</div>
+<!-- Main Split-Screen Workspace (65% Composer / 35% Checklist & Audit Sidebar) -->
+<div class="px-margin py-space-lg grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT PANEL: Enterprise Email Composer (8 cols on XL) -->
+<div class="xl:col-span-8 flex flex-col gap-space-lg">
+<!-- Envelope & Dispatch Form Card -->
+<div class="bg-surface-container-lowest rounded shadow-sm border border-outline-variant/40 overflow-hidden">
+<!-- Header Controls Row -->
+<div class="bg-surface-container-low px-space-lg py-space-md border-b border-outline-variant/30 flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]">drafts</span>
+<span class="font-headline-md text-headline-md text-on-surface">Outbound Institutional Notice Dispatcher</span>
+</div>
+<div class="flex items-center gap-space-xs text-label-sm font-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-on-tertiary-container">lock</span>
+            Encrypted Northgate SMTP Relay (TLS 1.3 Strict)
+          </div>
+</div>
+<!-- Addressing Fields Grid -->
+<div class="p-space-lg space-y-space-md text-body-sm font-body-sm">
+<!-- Template Selection Row -->
+<div class="flex flex-col md:flex-row md:items-center gap-space-sm pb-space-xs border-b border-outline-variant/20">
+<label class="w-24 shrink-0 font-label-md text-label-md text-on-surface-variant">Template</label>
+<div class="flex-1 flex items-center gap-space-sm">
+<div class="relative flex-1">
+<select class="w-full pl-3 pr-8 py-1.5 bg-surface-container border border-outline-variant/60 rounded text-on-surface font-body-sm focus:outline-none focus:border-primary-container" id="templateSelector">
+<option selected="" value="round2">Corporate KYC - 2nd Chase Reminder (Standard Institutional 7-Day Notice)</option>
+<option value="initial">Corporate KYC - Initial Onboarding Request (Welcome Pack)</option>
+<option value="round1">Corporate KYC - Friendly Reminder 1 (Day 3 Soft Push)</option>
+<option value="urgent">Corporate KYC - Urgent Escalate Round 2 (Risk Officer Notified)</option>
+<option value="final">Corporate KYC - Final 5-Day Notice (Account Freeze Warning)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2 pointer-events-none text-outline-variant text-[18px]">expand_more</span>
+</div>
+<span class="px-space-sm py-1 bg-surface-container-high text-on-surface-variant rounded text-label-sm font-label-sm shrink-0">
+                Preset v4.2
+              </span>
+</div>
+</div>
+<!-- To Field -->
+<div class="flex flex-col md:flex-row md:items-center gap-space-sm pb-space-xs border-b border-outline-variant/20">
+<label class="w-24 shrink-0 font-label-md text-label-md text-on-surface-variant">To</label>
+<div class="flex-1 flex items-center justify-between bg-surface-container-low px-space-md py-1 rounded border border-outline-variant/40">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary-container text-on-primary font-label-md text-label-md">
+<span class="material-symbols-outlined text-[14px]">account_circle</span>
+                  David Alastair (CFO)
+                  <span class="text-on-primary-container font-mono text-[11px]"><david.alastair@apexholdings.co.uk></span>
+</span>
+<span class="text-label-sm font-label-sm text-on-tertiary-container bg-surface-variant px-1.5 py-0.5 rounded">Primary Legal Contact</span>
+</div>
+<button class="text-outline-variant hover:text-on-surface text-label-sm font-label-sm uppercase" type="button">Add Recipient</button>
+</div>
+</div>
+<!-- CC Field -->
+<div class="flex flex-col md:flex-row md:items-center gap-space-sm pb-space-xs border-b border-outline-variant/20">
+<label class="w-24 shrink-0 font-label-md text-label-md text-on-surface-variant">CC (Audit)</label>
+<div class="flex-1 flex flex-wrap items-center gap-1.5 py-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container text-on-surface text-body-sm font-body-sm border border-outline-variant/40">
+<span class="material-symbols-outlined text-[13px] text-outline">group</span>
+                onboarding-ops@northgatechase.bank
+              </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container text-on-surface text-body-sm font-body-sm border border-outline-variant/40">
+<span class="material-symbols-outlined text-[13px] text-outline">shield</span>
+                kyc-compliance@northgatechase.bank
+              </span>
+<span class="text-label-sm font-label-sm text-outline-variant italic ml-1">(System mandated compliance copies)</span>
+</div>
+</div>
+<!-- From Field -->
+<div class="flex flex-col md:flex-row md:items-center gap-space-sm pb-space-xs border-b border-outline-variant/20">
+<label class="w-24 shrink-0 font-label-md text-label-md text-on-surface-variant">From (RM)</label>
+<div class="flex-1 flex items-center justify-between text-body-sm font-body-sm text-on-surface">
+<div class="flex items-center gap-space-xs">
+<span class="font-medium text-on-surface">Marcus Vance, Senior Relationship Manager</span>
+<span class="font-mono text-on-surface-variant text-label-md"><m.vance@northgatechase.bank></span>
+</div>
+<span class="text-label-sm font-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Institutional Desk 12</span>
+</div>
+</div>
+<!-- Subject Field -->
+<div class="flex flex-col md:flex-row md:items-center gap-space-sm pb-space-xs border-b border-outline-variant/20">
+<label class="w-24 shrink-0 font-label-md text-label-md text-on-surface-variant">Subject</label>
+<div class="flex-1">
+<input class="w-full px-2.5 py-1.5 bg-surface-container-low border border-outline-variant/50 rounded font-headline-md text-headline-md text-on-surface focus:outline-none" readonly="" type="text" value="ACTION REQUIRED: Outstanding Corporate KYC Documents for Apex Global Holdings Ltd (Ref: NG-2026-0842)"/>
+</div>
+</div>
+<!-- Hard SLA Due Date Field -->
+<div class="flex flex-col md:flex-row md:items-center gap-space-sm pt-space-xs">
+<label class="w-24 shrink-0 font-label-md text-label-md text-on-surface-variant">Hard SLA Date</label>
+<div class="flex-1 flex flex-wrap items-center gap-space-md">
+<div class="flex items-center gap-space-xs bg-surface-container px-space-md py-1 rounded border border-outline-variant/50">
+<span class="material-symbols-outlined text-[18px] text-error">calendar_clock</span>
+<input class="bg-transparent font-tabular-data text-tabular-data text-on-surface font-semibold focus:outline-none w-56" type="text" value="18 February 2026, 17:00 GMT"/>
+</div>
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded bg-error-container text-on-error-container font-semibold">
+                SLA Window: 7 Calendar Days
+              </span>
+<span class="text-label-sm font-label-sm text-outline-variant">Auto-calculated based on MIFID-II onboarding timeline</span>
+</div>
+</div>
+</div>
+<!-- Rich Text Formatting Toolbar Simulation -->
+<div class="bg-surface-container px-space-lg py-1.5 border-t border-b border-outline-variant/40 flex items-center justify-between">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface" type="button"><span class="material-symbols-outlined text-[18px]">format_bold</span></button>
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface" type="button"><span class="material-symbols-outlined text-[18px]">format_italic</span></button>
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface" type="button"><span class="material-symbols-outlined text-[18px]">format_underlined</span></button>
+<span class="h-4 w-px bg-outline-variant/40 mx-1"></span>
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface" type="button"><span class="material-symbols-outlined text-[18px]">format_list_bulleted</span></button>
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface" type="button"><span class="material-symbols-outlined text-[18px]">format_list_numbered</span></button>
+<span class="h-4 w-px bg-outline-variant/40 mx-1"></span>
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface" type="button"><span class="material-symbols-outlined text-[18px]">link</span></button>
+<button class="p-1 rounded hover:bg-surface-container-high text-on-surface flex items-center gap-1 font-label-sm text-label-sm" type="button">
+<span class="material-symbols-outlined text-[16px] text-on-tertiary-container">token</span>
+              Insert Dynamic Token
+            </button>
+</div>
+<div class="flex items-center gap-space-xs text-label-sm font-label-sm text-on-surface-variant">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary"></span>
+            Rich Draft View • RM Customizations Enabled
+          </div>
+</div>
+<!-- Email Body Staging / Preview Area -->
+<div class="p-space-xl bg-surface-container-lowest font-body-md text-body-md text-on-surface leading-relaxed space-y-space-md">
+<p>Dear David,</p>
+<p>
+            Thank you for your ongoing partnership with Northgate Chase as we finalize the corporate onboarding and account setup for <strong class="text-on-surface">Apex Global Holdings Ltd</strong>.
+          </p>
+<p>
+            Our KYC Operations team has completed verification for your Certificate of Incorporation and authorized signatory cards. However, to complete our regulatory checks and commence UBO verification, we urgently require the following <span class="bg-error-container text-on-error-container font-semibold px-1 py-0.5 rounded">3 outstanding items</span>:
+          </p>
+<!-- Highlighted Missing Items Box inside Email -->
+<div class="my-space-md p-space-md bg-surface-container-low rounded border border-outline-variant/50 space-y-space-md">
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">error</span>
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">
+                  1. Certified Group Ownership Structure Chart (>25% shareholding threshold)
+                </div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+<strong class="text-on-surface">Detail required:</strong> Must clearly delineate ultimate beneficial owners up to parent trust or individual natural persons. Certified by company secretary or legal counsel within the last 6 months.
+                </div>
+</div>
+</div>
+<div class="h-px bg-outline-variant/30"></div>
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">error</span>
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">
+                  2. Memorandum & Articles of Association
+                </div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+<strong class="text-on-surface">Detail required:</strong> Fully executed and registered copy reflecting latest amended share classes.
+                </div>
+</div>
+</div>
+<div class="h-px bg-outline-variant/30"></div>
+<div class="flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-error text-[18px] shrink-0 mt-0.5">error</span>
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">
+                  3. Certified Government Photo ID for UBO: Sir Arthur Pendelton (38% indirect ownership)
+                </div>
+<div class="text-body-sm font-body-sm text-on-surface-variant mt-0.5">
+<strong class="text-on-surface">Detail required:</strong> Clear color passport copy, notarised or certified by a regulated solicitor/auditor.
+                </div>
+</div>
+</div>
+</div>
+<p>
+            To avoid delays in opening your settlement accounts and issuing credit lines, please upload these documents to your encrypted Northgate Client Portal by <strong class="text-error font-semibold">Wednesday, 18 February 2026 (17:00 GMT)</strong>:
+          </p>
+<!-- Secure Client Upload Link Token Tile -->
+<div class="p-space-md bg-surface-container rounded border-l-4 border-primary-container flex items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary-container text-[24px]">cloud_upload</span>
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">Encrypted Direct Upload Access Point</div>
+<div class="font-mono text-label-md text-on-tertiary-container select-all underline">
+                  https://client-portal.northgatechase.bank/upload/NG-2026-0842
+                </div>
+</div>
+</div>
+<span class="px-2 py-1 bg-surface-container-lowest rounded text-label-sm font-label-sm text-secondary font-mono border border-outline-variant/40 shrink-0">
+              Token Valid: 7d
+            </span>
+</div>
+<p>
+            If you have any questions or require an extension, please contact me directly.
+          </p>
+<!-- RM Formal Institutional Signature -->
+<div class="pt-space-md border-t border-outline-variant/30 text-body-sm font-body-sm text-on-surface space-y-0.5">
+<div class="font-normal text-on-surface-variant">Kind regards,</div>
+<div class="font-headline-md text-headline-md text-on-surface pt-1">Marcus Vance</div>
+<div class="text-on-surface font-medium">Senior Relationship Manager, Corporate & Institutional Banking</div>
+<div class="text-on-surface-variant">Northgate Chase Bank PLC • London HQ (Node EU-EAST)</div>
+<div class="text-label-sm font-label-sm text-outline pt-1">Tel: +44 (0)20 7946 0912 • Direct Secure Portal: ng.bank/vance-desk</div>
+</div>
+</div>
+<!-- Draft Integrity Bar -->
+<div class="bg-surface-container-low px-space-lg py-space-sm border-t border-outline-variant/30 flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Draft Checksum: <code class="font-mono">SHA256: 8f9b...41e0</code></span>
+<span>• Character Count: 1,482</span>
+</div>
+<div class="flex items-center gap-2">
+<span>Encoding: UTF-8 / Standard Regulatory Notice</span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANEL: Attachment/Token Checklist & Audit Lineage (4 cols on XL) -->
+<div class="xl:col-span-4 flex flex-col gap-space-lg">
+<!-- Referenced Checklist Items (3) -->
+<div class="bg-surface-container-lowest rounded shadow-sm border border-outline-variant/40 overflow-hidden">
+<div class="bg-surface-container px-space-md py-space-sm border-b border-outline-variant/30 flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">rule</span>
+<span class="font-headline-md text-headline-md text-on-surface">Referenced Checklist Items (3)</span>
+</div>
+<span class="px-1.5 py-0.5 rounded bg-error-container text-on-error-container text-label-sm font-label-sm font-semibold">
+            All Critical
+          </span>
+</div>
+<div class="p-space-md divide-y divide-outline-variant/30 space-y-space-sm">
+<!-- Item 1 -->
+<div class="pt-space-sm first:pt-0">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<span class="font-headline-md text-headline-md text-on-surface">Certified Ownership Chart</span>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold bg-error-container text-on-error-container border border-error/20">
+                Overdue 21d
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+              Missing legal delineation for parent trust entities above 25% ownership threshold.
+            </p>
+<div class="flex items-center gap-space-sm mt-2 text-label-sm font-label-sm text-outline">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">history</span> 2 Prior Inquiries</span>
+<span>•</span>
+<span class="font-mono">MANDATORY_AML6</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="pt-space-sm">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<span class="font-headline-md text-headline-md text-on-surface">Memo & Articles of Assoc.</span>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold bg-error-container text-on-error-container border border-error/20">
+                Overdue 12d
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+              Executed copy required reflecting amended share classes approved at 2025 AGM.
+            </p>
+<div class="flex items-center gap-space-sm mt-2 text-label-sm font-label-sm text-outline">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">history</span> 1 Prior Inquiry</span>
+<span>•</span>
+<span class="font-mono">CORP_STATUTORY</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="pt-space-sm">
+<div class="flex items-start justify-between gap-space-xs mb-1">
+<span class="font-headline-md text-headline-md text-on-surface">UBO ID: Sir Arthur Pendelton</span>
+<span class="px-2 py-0.5 rounded text-label-sm font-label-sm font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant/40">
+                Round 2
+              </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">
+              38% indirect ownership. Certified color passport copy required with apostille or solicitor mark.
+            </p>
+<div class="flex items-center gap-space-sm mt-2 text-label-sm font-label-sm text-outline">
+<span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[14px]">person</span> Natural Person UBO</span>
+<span>•</span>
+<span class="font-mono">SANCTION_SCREEN</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Verified Dynamic Tokens Card -->
+<div class="bg-surface-container-lowest rounded shadow-sm border border-outline-variant/40 p-space-md space-y-space-md">
+<div class="flex items-center justify-between border-b border-outline-variant/30 pb-space-sm">
+<div class="font-headline-md text-headline-md text-on-surface flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+            Active Embed Tokens
+          </div>
+<span class="text-label-sm font-label-sm text-on-tertiary-container bg-surface-container px-2 py-0.5 rounded">All Resolved</span>
+</div>
+<div class="space-y-space-sm font-body-sm text-body-sm">
+<div class="p-2 rounded bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary">link</span>
+<div>
+<div class="font-medium text-on-surface">Secure Upload Link</div>
+<div class="text-label-sm font-label-sm text-outline font-mono">Token: {{SECURE_PORTAL_URL}}</div>
+</div>
+</div>
+<span class="text-label-sm font-label-sm px-1.5 py-0.5 rounded bg-surface-variant text-on-surface-variant">Active</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary">badge</span>
+<div>
+<div class="font-medium text-on-surface">Client Dossier ID</div>
+<div class="text-label-sm font-label-sm text-outline font-mono">Value: NG-2026-0842</div>
+</div>
+</div>
+<span class="text-label-sm font-label-sm px-1.5 py-0.5 rounded bg-surface-variant text-on-surface-variant">Verified</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary">schedule</span>
+<div>
+<div class="font-medium text-on-surface">SLA Timestamp</div>
+<div class="text-label-sm font-label-sm text-outline font-mono">2026-02-18T17:00:00Z</div>
+</div>
+</div>
+<span class="text-label-sm font-label-sm px-1.5 py-0.5 rounded bg-surface-variant text-on-surface-variant">Locked</span>
+</div>
+</div>
+</div>
+<!-- Audit Trail Commitment Box (Strict Institutional Guardrail) -->
+<div class="bg-surface-container rounded border border-outline-variant/50 p-space-md space-y-space-sm">
+<div class="flex items-center gap-space-xs text-on-surface font-headline-md text-headline-md">
+<span class="material-symbols-outlined text-primary-container text-[18px]">verified_user</span>
+          Audit Trail Commitment
+        </div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-normal">
+          When approved, this email timestamp, exact recipient list, and full body text will be permanently recorded in <strong class="text-on-surface">Case Timeline (NG-2026-0842)</strong> for regulatory audit compliance.
+        </p>
+<div class="pt-space-xs flex items-center gap-space-xs font-tabular-data text-tabular-data text-outline">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+          Immutable WORM Storage Protocol Active
+        </div>
+</div>
+<!-- Visual Entity Snapshot Card -->
+<div class="bg-surface-container-lowest rounded shadow-sm border border-outline-variant/40 p-space-md">
+<div class="flex items-center gap-space-sm mb-space-sm">
+<div class="w-10 h-10 rounded bg-primary-container flex items-center justify-center text-on-primary font-headline-md text-headline-md">
+            AG
+          </div>
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">Apex Global Holdings Ltd</div>
+<div class="text-label-sm font-label-sm text-on-surface-variant">UK Registered Co #09482110 • Tier-2 Corporate</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-space-xs font-tabular-data text-tabular-data pt-space-xs border-t border-outline-variant/30 text-on-surface-variant">
+<div>Entity Risk: <span class="font-semibold text-error">Medium-High</span></div>
+<div>Jurisdiction: <span class="font-semibold text-on-surface">United Kingdom</span></div>
+<div>Total UBOs: <span class="font-semibold text-on-surface">4 Natural Persons</span></div>
+<div>Inflow Target: <span class="font-semibold text-on-surface">£45M Initial</span></div>
+</div>
+</div>
+</div>
+</div>
+<!-- STICKY ACTION FOOTER BAR (High Visual Hierarchy) -->
+<div class="sticky bottom-0 z-40 w-full bg-surface-container-lowest border-t-2 border-primary-container/20 px-margin py-space-md shadow-[0_-4px_12px_rgba(15,30,54,0.08)]">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-space-md">
+<!-- Left: Navigation / Cancel / Local Save -->
+<div class="flex items-center gap-space-sm w-full md:w-auto">
+<button class="px-space-md py-2 rounded bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+          Cancel & Return to Case
+        </button>
+<button class="px-space-md py-2 rounded bg-surface-container border border-outline-variant/60 hover:bg-surface-container-high text-on-surface-variant font-label-md text-label-md transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">bookmark_border</span>
+          Save as Internal Draft
+        </button>
+</div>
+<!-- Middle: Scheduling / Deferral -->
+<div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<button class="px-space-md py-2 rounded bg-surface-container-low border border-outline-variant/50 hover:bg-surface-container text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">schedule_send</span>
+          Schedule Send for Later
+        </button>
+<span class="text-label-sm font-label-sm text-outline hidden lg:inline">(Queues for RM-approved batch)</span>
+</div>
+<!-- Right: Primary Review & Dispatch CTAs -->
+<div class="flex items-center gap-space-sm w-full md:w-auto justify-end">
+<button class="px-space-md py-2 rounded bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1.5" id="toggleEditBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+          Edit Email Body
+        </button>
+<!-- Primary Solid Navy Dispatch CTA -->
+<div class="relative group">
+<button class="px-space-xl py-2.5 rounded bg-primary-container hover:bg-primary text-on-primary font-headline-md text-headline-md tracking-tight transition-all duration-150 flex items-center gap-space-sm shadow-md active:scale-95" id="approveSendBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+            Approve and Send Now
+          </button>
+<!-- Persistent Institutional Tooltip on Hover -->
+<div class="absolute bottom-full right-0 mb-2 hidden group-hover:flex flex-col w-64 p-space-sm bg-primary text-on-primary rounded text-label-sm font-label-sm shadow-lg pointer-events-none z-50">
+<div class="font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+              Irreversible Operational Action
+            </div>
+<div class="text-on-primary-container text-[11px] mt-0.5 leading-normal">
+              Logs to Case Timeline (NG-2026-0842) and delivers via Northgate SMTP relay under Marcus Vance credentials.
+            </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Send Confirmation Modal (Structural Level 3) -->
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-primary-container/60 backdrop-blur-sm p-space-lg" id="confirmationModal">
+<div class="bg-surface-container-lowest max-w-lg w-full rounded-lg shadow-2xl border border-outline-variant/60 overflow-hidden transform transition-all">
+<div class="bg-primary-container text-on-primary px-space-lg py-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-sm font-headline-md text-headline-md">
+<span class="material-symbols-outlined text-[20px]">mark_email_read</span>
+          Final RM Authorization Sign-Off
+        </div>
+<button class="text-outline-variant hover:text-on-primary" id="closeModalBtn" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="p-space-lg space-y-space-md text-body-sm font-body-sm text-on-surface">
+<div class="p-space-md bg-surface-container-low rounded border border-outline-variant/40 space-y-1">
+<div class="text-label-sm font-label-sm uppercase tracking-wider text-outline-variant">Dispatch Summary</div>
+<div class="font-medium text-on-surface">Recipient: David Alastair <david.alastair@apexholdings.co.uk></div>
+<div class="text-on-surface-variant">Subject: ACTION REQUIRED: Outstanding Corporate KYC Documents (Apex Global)</div>
+<div class="text-on-surface-variant">Attachments/Demands: 3 Verified Documents Listed</div>
+</div>
+<p class="text-on-surface-variant">
+          You are authorizing this transmission as <strong>Marcus Vance</strong> (Senior Relationship Manager). The document chase clocks will update immediately, setting the new mandatory SLA deadline to <strong>18 February 2026, 17:00 GMT</strong>.
+        </p>
+<div class="flex items-center gap-space-sm p-space-sm bg-surface-container rounded text-label-sm font-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+<span>Digital Signature Token: <code>DSIG-VANCE-2026-0842-CHASE2</code></span>
+</div>
+</div>
+<div class="bg-surface-container-low px-space-lg py-space-md border-t border-outline-variant/30 flex items-center justify-end gap-space-sm">
+<button class="px-space-md py-1.5 rounded bg-surface-container border border-outline-variant text-on-surface font-label-md text-label-md" id="cancelSendBtn" type="button">
+          Review Again
+        </button>
+<button class="px-space-lg py-1.5 rounded bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary flex items-center gap-1.5" id="executeSendBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">send</span>
+          Execute Dispatch
+        </button>
+</div>
+</div>
+</div>
+<!-- Inline Script for Interactive Composer Behaviors -->
+<script>
+    (function initComposer() {
+      const approveSendBtn = document.getElementById('approveSendBtn');
+      const confirmationModal = document.getElementById('confirmationModal');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelSendBtn = document.getElementById('cancelSendBtn');
+      const executeSendBtn = document.getElementById('executeSendBtn');
+      const toggleEditBtn = document.getElementById('toggleEditBtn');
+      const templateSelector = document.getElementById('templateSelector');
+
+      if (approveSendBtn && confirmationModal) {
+        approveSendBtn.addEventListener('click', () => {
+          confirmationModal.classList.remove('hidden');
+          confirmationModal.classList.add('flex');
+        });
+      }
+
+      function hideModal() {
+        if (confirmationModal) {
+          confirmationModal.classList.add('hidden');
+          confirmationModal.classList.remove('flex');
+        }
+      }
+
+      if (closeModalBtn) closeModalBtn.addEventListener('click', hideModal);
+      if (cancelSendBtn) cancelSendBtn.addEventListener('click', hideModal);
+
+      if (executeSendBtn) {
+        executeSendBtn.addEventListener('click', () => {
+          executeSendBtn.disabled = true;
+          executeSendBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> Dispatching via Relay...';
+          setTimeout(() => {
+            alert('Notice Dispatched successfully! Case NG-2026-0842 updated. Returning to Case Dossier.');
+            hideModal();
+            window.location.hash = '#case-detail';
+          }, 900);
+        });
+      }
+
+      if (toggleEditBtn) {
+        toggleEditBtn.addEventListener('click', () => {
+          const isEditing = toggleEditBtn.getAttribute('data-editing') === 'true';
+          if (!isEditing) {
+            toggleEditBtn.setAttribute('data-editing', 'true');
+            toggleEditBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">save</span> Lock Body Changes';
+            toggleEditBtn.classList.add('bg-primary-container', 'text-on-primary');
+            toggleEditBtn.classList.remove('bg-surface-container', 'text-on-surface');
+          } else {
+            toggleEditBtn.setAttribute('data-editing', 'false');
+            toggleEditBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">edit</span> Edit Email Body';
+            toggleEditBtn.classList.remove('bg-primary-container', 'text-on-primary');
+            toggleEditBtn.classList.add('bg-surface-container', 'text-on-surface');
+          }
+        });
+      }
+
+      if (templateSelector) {
+        templateSelector.addEventListener('change', (e) => {
+          // Micro-interaction indicator on template switch
+          const badge = document.querySelector('[data-path="reminder-composer"]');
+          if (badge) badge.classList.add('animate-pulse');
+        });
+      }
+    })();
+  </script>
+</div></main><footer class="w-full bg-surface-container-lowest border-t border-outline-variant/30 py-space-md px-margin text-on-surface-variant font-tabular-data text-tabular-data"><div class="flex flex-col md:flex-row items-center justify-between gap-space-sm"><div>Northgate Chase Global Banking Operations • Tier-1 Institutional Compliance Node</div><div class="flex items-center gap-space-lg"><span class="text-label-sm font-label-sm uppercase">Regulatory Ref: MIFID-II / EU-AML-6</span><span>Environment: PROD-EU-EAST</span><span>Node Sync: OK</span></div></div></footer></body></html>
