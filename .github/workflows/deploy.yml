@@ -1,0 +1,90 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: northgate-cloud-run-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: Run CI gates
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Deploy to Cloud Run
+    needs: ci
+    if: vars.GCP_DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      REPOSITORY: ${{ vars.GCP_ARTIFACT_REPOSITORY }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Validate deployment configuration
+        env:
+          DEPLOYER_SERVICE_ACCOUNT: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          test -n "$PROJECT_ID"
+          test -n "$DEPLOYER_SERVICE_ACCOUNT"
+          test -n "$WORKLOAD_IDENTITY_PROVIDER"
+          test "$REGION" = "asia-south1"
+          test "$REPOSITORY" = "northgate-containers"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and publish immutable image
+        env:
+          IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}/northgate-chase:${{ github.sha }}
+        run: |
+          docker build --tag "$IMAGE" .
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+        id: image
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Initialize Terraform remote state
+        run: terraform -chdir=terraform init -input=false -backend-config="bucket=northgate-${PROJECT_ID}-tfstate" -backend-config="prefix=northgate-chase"
+
+      - name: Verify GCP resource restrictions
+        run: python terraform/check_restrictions.py
+
+      - name: Plan infrastructure and application deployment
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: terraform -chdir=terraform plan -input=false -var="project_id=$PROJECT_ID" -var="image=$IMAGE" -out=northgate.tfplan
+
+      - name: Apply infrastructure and application deployment
+        run: terraform -chdir=terraform apply -input=false -auto-approve northgate.tfplan
+
+      - name: Show deployed URL
+        run: terraform -chdir=terraform output -raw cloud_run_url

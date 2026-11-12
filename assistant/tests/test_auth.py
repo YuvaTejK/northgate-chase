@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from starlette.responses import Response
 
 from assistant.app.auth import SessionUser, decode_session, encode_session, set_session_cookie
-from assistant.app.config import Settings
+from assistant.app.config import Settings, load_settings
 
 
 def test_signed_session_round_trip_and_tamper_detection() -> None:
@@ -60,3 +60,17 @@ def test_demo_session_cookie_secure_flag(secure: bool, expected: bool) -> None:
     response = Response()
     set_session_cookie(response, SessionUser(name="Alice RM", role="relationship_manager"), settings)
     assert ("secure" in response.headers["set-cookie"].lower()) is expected
+
+
+def test_vertex_ai_is_configured_with_project_without_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("VERTEX_AI_ENABLED", "true")
+    monkeypatch.setenv("GCP_PROJECT_ID", "synthetic-demo-project")
+    monkeypatch.setenv("VERTEX_AI_LOCATION", "global")
+
+    settings = load_settings()
+
+    assert settings.gemini_api_key is None
+    assert settings.gemini_configured
+    assert settings.gcp_project_id == "synthetic-demo-project"
+    assert settings.vertex_ai_enabled

@@ -1,42 +1,22 @@
-# First step: GitHub CI
+# CI and CD
 
-This project is ready for **CI only**. GitHub Actions will run the app tests, build the frontend, and build the Docker image when you push to `main` or open a pull request targeting `main`. It does not deploy the app. You do not need a Google Cloud account, Docker installed on your computer, or GitHub secrets to run these checks.
+The public GitHub repository is [YuvaTejK/northgate-chase](https://github.com/YuvaTejK/northgate-chase).
 
-## 1. Create an empty GitHub repository
+## What runs
 
-On GitHub, create a **private** repository. Do not initialize it with a README, license, or `.gitignore`; this project already contains those files. Copy the repository's HTTPS URL, such as `https://github.com/YOUR-NAME/northgate-chase.git`.
+- Pull requests targeting `main` run **CI**: Node and Python tests, frontend build, Docker image build, Terraform format/validation, and GCP restriction checks.
+- Pushes to `main` run **CD**. CD calls the same CI checks first. Deployment is skipped unless `GCP_DEPLOY_ENABLED` is set to `true` after completing the GCP setup in [DEPLOYMENT.md](./DEPLOYMENT.md).
+- No GCP credentials are required for CI. CD uses Workload Identity Federation and does not store a service-account key in GitHub.
 
-## 2. Push this project from PowerShell
+## Check a run
 
-Open PowerShell in the project folder and check which files Git will see before staging anything:
+Open the repository's **Actions** tab:
 
-```powershell
-git init -b main
-git status --short
-```
+- Select **CI** to see pull-request checks.
+- Select **CD** to see the CI gate and deployment status for a `main` push. Until deployment is enabled, the deploy job is intentionally skipped.
 
-Review the file list. Do not continue if it contains secrets or real client information. The project `.gitignore` excludes `.env`, the local database, dependencies, and build output.
+## Protect `main`
 
-Then stage, review, commit, and push:
+In **Settings → Branches**, add a branch protection rule for `main`. Enable **Require status checks to pass before merging**, then select the CI status check after its first successful pull-request run. This helps keep untested changes from reaching the CD workflow.
 
-```powershell
-git add .
-git status --short
-git commit -m "Set up GitHub CI"
-git remote add origin https://github.com/YOUR-NAME/northgate-chase.git
-git push -u origin main
-```
-
-Replace the example URL with the HTTPS URL for your repository. Git may ask you to sign in to GitHub.
-
-## 3. Confirm CI passed
-
-On GitHub, open the repository's **Actions** tab and select the **CI** workflow. Its **Test application** job runs the Node and Python tests, builds the frontend, and builds the production Docker image. Wait for the run on `main` to finish with a green check.
-
-After that, create a feature branch for each change and open a pull request targeting `main`. CI will run on the pull request so you can check it before merging.
-
-## Optional: require CI before merging
-
-To prevent merging pull requests until CI passes, open the repository's **Settings → Branches** and add a branch protection rule for `main`. Enable **Require status checks to pass before merging**, then select **Test application** after its first successful workflow run. This is optional; CI still runs without branch protection.
-
-No GCP settings are needed for this CI stage. Cloud Run deployment can be added later after CI is working.
+Before enabling CD, follow the project, billing, secret, Terraform state, and GitHub variable setup in [DEPLOYMENT.md](./DEPLOYMENT.md). Use synthetic data only.

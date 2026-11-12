@@ -68,8 +68,9 @@ def create_app(
     async def assistant_health():
         return {
             "status": "ok",
-            "geminiConfigured": bool(config.gemini_api_key),
+            "geminiConfigured": config.gemini_configured,
             "model": config.gemini_model,
+            "provider": "vertex-ai" if config.vertex_ai_enabled else "gemini-api",
             "mode": "synthetic-data",
         }
 

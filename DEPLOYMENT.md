@@ -1,89 +1,97 @@
-# Future step: Google Cloud deployment
+# Google Cloud CD
 
-**Deployment is not enabled yet.** The current GitHub Actions workflow, `.github/workflows/ci.yml`, only runs tests, builds the frontend, and verifies the Docker image build. It does not publish an image or connect to Google Cloud. Start with [CI.md](./CI.md) and confirm those checks pass before adding deployment.
+The CD setup uses Terraform for the GCP foundation and GitHub Actions Workload Identity Federation for keyless container deployment. The first release is intentionally limited to the services this app needs:
 
-The planned deployment uses one Cloud Run service and one Docker image. This keeps the Node API and Python assistant together because they share a SQLite database. GitHub-to-Google authentication should use Workload Identity Federation; do not store a Google service-account key in GitHub.
+- **Cloud Run** in `asia-south1`, with public access for the synthetic demo, scale-to-zero, and a one-instance maximum.
+- **Artifact Registry** in `asia-south1` for immutable, commit-tagged Docker images.
+- **Secret Manager** for the session-signing secret.
+- **Vertex AI** for the approved `gemini-3-flash-preview` model, using the runtime service account rather than an API key.
+- Cloud Run's built-in stdout/stderr logging and service metrics.
 
-> **Prototype only:** The service is public and uses synthetic demo personas, not bank sign-in. Do not enter real KYC records, client data, or other sensitive information. The SQLite database is in Cloud Run's temporary `/tmp` storage and can reset when an instance stops, is replaced, or a new revision is deployed. This setup is not suitable for persistent or production data. A persistent database such as Cloud SQL requires a separate application migration.
+The Terraform creates a private, versioned `asia-south1` Cloud Storage bucket for Terraform state, an Artifact Registry repository, required APIs, service accounts, IAM bindings, the session-secret container, and a GitHub identity provider restricted to this repository's `main` branch. Once enabled, CD builds and publishes the image, then uses Terraform to create/update the Cloud Run service and public demo access.
 
-## Before you deploy
+## Important limitations and restrictions
 
-Follow [CI.md](./CI.md) first to create a repository and push the source. When CI is passing, return here to prepare Google Cloud.
+- **Demo only:** Cloud Run is publicly reachable. It uses prototype persona sign-in, not bank SSO. Only use synthetic data; never enter real KYC records, client details, credentials, or other sensitive information.
+- **Ephemeral data:** The SQLite database is stored on Cloud Run's temporary `/tmp` filesystem. It can reset whenever the instance stops, is replaced, or is redeployed. Do not rely on records surviving. Persistent data requires a separate migration to a managed database.
+- **Billing:** A GCP project with billing enabled is required. Cloud Run, image storage, Secret Manager, and Vertex AI usage may incur charges. Set a billing budget and alerts in the Cloud Console before deployment.
+- **Vertex AI location:** The approved preview model is called through Vertex AI's `global` endpoint. A global model endpoint does not guarantee in-region model processing or data residency. This deployment is for synthetic content only.
+- **Cloud Storage:** The only bucket is the private Terraform state bucket in `asia-south1`; public access is blocked and object versioning is enabled.
+- **Firestore:** Not used. If added later, only Firestore Standard Edition is permitted; do not enable or provision Enterprise Edition.
+- Cloud Functions, VPC, Cloud Load Balancing, Pub/Sub, KMS keys/import jobs, Vertex embeddings/vector search, ADK, and Agent Engine are not required or provisioned for this app. Add them only for a separately approved product requirement.
+- Cloud Logging receives container stdout/stderr, and Cloud Run supplies platform metrics. The app does not currently export Cloud Trace spans or create custom Monitoring dashboards/alerts.
 
-## 1. Prepare Google Cloud (later, when adding deployment)
+No Terraform state, secret values, service-account keys, or GCP credentials belong in Git. Local Terraform state and provider caches are ignored by `.gitignore`.
 
-Install and sign in to the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install), select a Google Cloud project with billing enabled, and set these PowerShell variables. Use the same region for Artifact Registry and Cloud Run.
+## 1. Find or create a GCP project
 
-```powershell
-$PROJECT_ID = "your-google-cloud-project-id"
-$REGION = "us-central1"
-$GITHUB_REPOSITORY = "OWNER/REPOSITORY"
-$DEPLOYER_EMAIL = "northgate-github-deployer@$PROJECT_ID.iam.gserviceaccount.com"
-$RUNTIME_EMAIL = "northgate-cloud-run@$PROJECT_ID.iam.gserviceaccount.com"
-```
+Open the [Google Cloud project picker](https://console.cloud.google.com/projectselector2/home/dashboard). Choose an existing project you are allowed to administer, or create one. Copy its **Project ID** (not just the display name) and make sure billing is linked and enabled. You will need permissions to enable APIs, create Artifact Registry and Secret Manager resources, create service accounts and Workload Identity Federation resources, and grant the roles declared in Terraform. If you do not have those permissions, ask your GCP administrator to apply the Terraform foundation for you.
 
-Enable the required APIs and create the image repository and service accounts:
+Do not share passwords, API keys, service-account JSON keys, or other credentials in chat.
 
-```powershell
-gcloud services enable run.googleapis.com artifactregistry.googleapis.com iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com secretmanager.googleapis.com --project $PROJECT_ID
-gcloud artifacts repositories create northgate-containers --project $PROJECT_ID --repository-format docker --location $REGION
-gcloud iam service-accounts create northgate-github-deployer --project $PROJECT_ID
-gcloud iam service-accounts create northgate-cloud-run --project $PROJECT_ID
-```
+## 2. Install and authenticate local tools
 
-Allow the GitHub deployer to publish images, deploy Cloud Run revisions, and attach the runtime account. The runtime account only needs access to the two application secrets:
-
-```powershell
-gcloud projects add-iam-policy-binding $PROJECT_ID --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/artifactregistry.writer
-gcloud projects add-iam-policy-binding $PROJECT_ID --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/run.admin
-gcloud iam service-accounts add-iam-policy-binding $RUNTIME_EMAIL --project $PROJECT_ID --member "serviceAccount:$DEPLOYER_EMAIL" --role roles/iam.serviceAccountUser
-```
-
-Create the two secrets in Secret Manager. The Gemini key is available from your Google AI Studio account. Supply it from a file stored outside the project folder; do not put it in GitHub variables or source code. Generate the session secret with a password manager or a secure random generator; use at least 32 random bytes.
+Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) and [Terraform](https://developer.hashicorp.com/terraform/install). In PowerShell, sign in with the account that can administer the project and configure Application Default Credentials for Terraform:
 
 ```powershell
-gcloud secrets create gemini-api-key --project $PROJECT_ID --replication-policy automatic
-gcloud secrets versions add gemini-api-key --project $PROJECT_ID --data-file "C:\secure\path\to\gemini-api-key.txt"
-gcloud secrets create northgate-session-secret --project $PROJECT_ID --replication-policy automatic
-gcloud secrets versions add northgate-session-secret --project $PROJECT_ID --data-file "C:\secure\path\to\northgate-session-secret.txt"
-gcloud secrets add-iam-policy-binding gemini-api-key --project $PROJECT_ID --member "serviceAccount:$RUNTIME_EMAIL" --role roles/secretmanager.secretAccessor
-gcloud secrets add-iam-policy-binding northgate-session-secret --project $PROJECT_ID --member "serviceAccount:$RUNTIME_EMAIL" --role roles/secretmanager.secretAccessor
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud auth application-default login
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 ```
 
-Create a GitHub Actions Workload Identity Federation pool and provider restricted to this repository's `main` branch:
+Replace `YOUR_PROJECT_ID` in the commands with the project ID you copied from the Console.
+
+## 3. Create the GCP foundation with Terraform
+
+From the project directory:
 
 ```powershell
-$PROJECT_NUMBER = gcloud projects describe $PROJECT_ID --format="value(projectNumber)"
-gcloud iam workload-identity-pools create github-actions --project $PROJECT_ID --location global --display-name "GitHub Actions"
-gcloud iam workload-identity-pools providers create-oidc github --project $PROJECT_ID --location global --workload-identity-pool github-actions --display-name "GitHub Actions for Northgate" --issuer-uri "https://token.actions.githubusercontent.com" --attribute-mapping "google.subject=assertion.sub,attribute.repository=assertion.repository" --attribute-condition "assertion.repository == '$GITHUB_REPOSITORY' && assertion.ref == 'refs/heads/main'"
-gcloud iam service-accounts add-iam-policy-binding $DEPLOYER_EMAIL --project $PROJECT_ID --role roles/iam.workloadIdentityUser --member "principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions/attribute.repository/$GITHUB_REPOSITORY"
+terraform -chdir=terraform init -backend=false
+terraform -chdir=terraform fmt -check -recursive
+terraform -chdir=terraform validate
+terraform -chdir=terraform plan -var="project_id=YOUR_PROJECT_ID"
 ```
 
-## 2. Configure GitHub Actions for deployment (later)
+Review the plan. On this first bootstrap, it should contain only the APIs, asia-south1 private state bucket, Artifact Registry repository, service accounts/IAM bindings, Workload Identity Federation pool/provider, and an empty Secret Manager secret. It must not create Firestore databases, KMS keys, VPCs, load balancers, or unrelated services. The Cloud Run service is intentionally not created until CD builds and pushes its first application image.
 
-In the GitHub repository, open **Settings → Secrets and variables → Actions**.
+Apply only after reviewing the plan and confirming the correct project and billing account:
 
-Add these **repository variables**:
+```powershell
+terraform -chdir=terraform apply -var="project_id=YOUR_PROJECT_ID"
+```
+
+Terraform state is stored locally in `terraform/terraform.tfstate`; keep it private and backed up securely. Do not commit it. The Terraform-created session secret has no versions yet.
+
+Migrate the bootstrap state to the private GCS bucket so GitHub Actions can use the same locked, durable state:
+
+```powershell
+terraform -chdir=terraform init -migrate-state -input=false -backend-config="bucket=northgate-YOUR_PROJECT_ID-tfstate" -backend-config="prefix=northgate-chase"
+```
+
+Replace `YOUR_PROJECT_ID` with the actual project ID. The bucket name must resolve to the Terraform output `state_bucket_name`.
+
+## 4. Add the session secret
+
+Generate a random session secret of at least 32 bytes with your password manager or a secure random generator. In Secret Manager in the Cloud Console, open `northgate-session-secret` and add it as a new secret version. Do not put the value in Git, a GitHub variable, a workflow file, or a terminal command. The first Cloud Run deployment will fail health checks or startup if the secret has no enabled version.
+
+## 5. Configure GitHub Actions
+
+In the GitHub repository, open **Settings → Secrets and variables → Actions → Variables** and add these repository variables from the Terraform outputs:
 
 | Variable | Value |
 | --- | --- |
-| `GCP_PROJECT_ID` | Your Google Cloud project ID |
-| `GCP_REGION` | The region used above, for example `us-central1` |
+| `GCP_DEPLOY_ENABLED` | Set to `false` until you have completed all checks; change to `true` to enable deployment |
+| `GCP_PROJECT_ID` | The existing GCP Project ID |
+| `GCP_REGION` | `asia-south1` |
 | `GCP_ARTIFACT_REPOSITORY` | `northgate-containers` |
-| `GCP_CLOUD_RUN_SERVICE` | `northgate-chase` |
-| `GCP_RUNTIME_SERVICE_ACCOUNT` | The full value of `$RUNTIME_EMAIL` |
+| `GCP_DEPLOYER_SERVICE_ACCOUNT` | Terraform output `deployer_service_account` |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Terraform output `workload_identity_provider` |
 
-Add these **repository secrets**:
+These identifiers are not credentials. The workflow uses the GitHub OIDC identity token; no service-account key or Gemini API key is stored in GitHub.
 
-| Secret | Value |
-| --- | --- |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-actions/providers/github` |
-| `GCP_DEPLOYER_SERVICE_ACCOUNT` | The full value of `$DEPLOYER_EMAIL` |
+## 6. Enable and verify CD
 
-Replace `PROJECT_NUMBER` in the provider value with the output of the `$PROJECT_NUMBER` command. The Gemini API key and session secret belong only in Google Secret Manager, not in GitHub.
+Keep `GCP_DEPLOY_ENABLED=false` until the project, billing, Terraform outputs, remote-state migration, and Secret Manager version are all verified. Change it to `true`, then push a commit to `main` or run **Actions → CD → Run workflow** on `main`. CD first runs the CI checks, then publishes an immutable Docker image and applies Terraform with that image. Terraform creates/updates Cloud Run, uses the approved Vertex AI model, and prints the Cloud Run URL on success.
 
-## 3. Deploy and verify (later)
-
-Push a commit to `main`. In GitHub, open **Actions → Test and deploy** to follow the tests, Docker image publication, and Cloud Run deployment. The final step prints the service URL. The workflow also runs tests on pull requests but does not deploy them.
-
-The deployment uses HTTPS-only secure session cookies, keeps the service at zero-to-one instances, and exposes the demo publicly. Only use synthetic data. Changes to the demo database are temporary; do not rely on them surviving an instance restart or deployment.
+Watch the **CI** and **CD** workflows in the repository's **Actions** tab. CI runs tests, frontend build, Docker build, and Terraform format/validation. CD runs only when enabled. Check Cloud Run logs and service health in the Google Cloud Console after deployment.

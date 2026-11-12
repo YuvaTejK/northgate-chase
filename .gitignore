@@ -7,6 +7,10 @@ data/*.sqlite
 data/*.sqlite-shm
 data/*.sqlite-wal
 .venv/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
 __pycache__/
 *.py[cod]
 .pytest_cache/

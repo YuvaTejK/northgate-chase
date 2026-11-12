@@ -21,6 +21,15 @@ class Settings:
     gemini_timeout_seconds: float
     demo_auth_enabled: bool
     cookie_secure: bool = False
+    gcp_project_id: str | None = None
+    vertex_ai_enabled: bool = False
+    vertex_ai_location: str = "global"
+
+    @property
+    def gemini_configured(self) -> bool:
+        if self.vertex_ai_enabled:
+            return bool(self.gcp_project_id)
+        return bool(self.gemini_api_key)
 
 
 def load_settings() -> Settings:
@@ -31,6 +40,9 @@ def load_settings() -> Settings:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key or api_key.startswith("replace_with_"):
         api_key = None
+    project_id = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT")
+    if not project_id:
+        project_id = None
 
     database_path = Path(os.getenv("DATABASE_PATH", "./data/northgate.sqlite"))
     if not database_path.is_absolute():
@@ -45,6 +57,9 @@ def load_settings() -> Settings:
         gemini_timeout_seconds=float(os.getenv("GEMINI_TIMEOUT_SECONDS", "18")),
         demo_auth_enabled=os.getenv("NORTHGATE_DEMO_AUTH_ENABLED", "true").lower() == "true",
         cookie_secure=os.getenv("NORTHGATE_COOKIE_SECURE", "false").lower() == "true",
+        gcp_project_id=project_id,
+        vertex_ai_enabled=os.getenv("VERTEX_AI_ENABLED", "false").lower() == "true",
+        vertex_ai_location=os.getenv("VERTEX_AI_LOCATION", "global"),
     )
 
 

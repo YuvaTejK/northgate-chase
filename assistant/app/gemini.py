@@ -29,19 +29,27 @@ class GeminiService:
         self._client: Any | None = None
 
     def _get_client(self) -> Any:
-        if not self.settings.gemini_api_key:
+        if self.settings.vertex_ai_enabled and not self.settings.gcp_project_id:
+            raise RuntimeError("Vertex AI requires GCP_PROJECT_ID or GOOGLE_CLOUD_PROJECT.")
+        if not self.settings.vertex_ai_enabled and not self.settings.gemini_api_key:
             raise RuntimeError("Gemini is not configured.")
         if self._client is None:
             from google import genai
             from google.genai import types
 
-            self._client = genai.Client(
-                api_key=self.settings.gemini_api_key,
-                http_options=types.HttpOptions(
-                    timeout=int(self.settings.gemini_timeout_seconds * 1000),
-                    retry_options=types.HttpRetryOptions(attempts=1),
-                ),
+            http_options = types.HttpOptions(
+                timeout=int(self.settings.gemini_timeout_seconds * 1000),
+                retry_options=types.HttpRetryOptions(attempts=1),
             )
+            if self.settings.vertex_ai_enabled:
+                self._client = genai.Client(
+                    vertexai=True,
+                    project=self.settings.gcp_project_id,
+                    location=self.settings.vertex_ai_location,
+                    http_options=http_options,
+                )
+            else:
+                self._client = genai.Client(api_key=self.settings.gemini_api_key, http_options=http_options)
         return self._client
 
     async def answer(

@@ -39,6 +39,8 @@ To run only the Node API, use `npm start`. The default database path is `./data/
 3. Activate the Python virtual environment and run `npm run dev`. The browser communicates with the local Python service through Vite; the Gemini key is read only by Python and is never returned to the frontend.
 4. Open **AI Assistant** and choose a synthetic demo persona. This persona selector is prototype authentication only, not bank SSO.
 
+The Cloud Run deployment uses Vertex AI Application Default Credentials instead of `GEMINI_API_KEY` and pins the approved `gemini-3-flash-preview` model. Its global Vertex AI endpoint does not guarantee in-region model processing; deploy and test only with synthetic data.
+
 The assistant service verifies its signed, HTTP-only, `SameSite=Strict` demo session before data retrieval. The repository applies role scope in SQL: RMs see only their assigned portfolio, analysts only their assigned cases, Ops the operational queue, and COOs aggregate metrics only. Facts and source references are generated from SQLite before a Gemini request; only the relevant synthetic facts are sent, with no credit-memo content. Unsupported or unauthorized case requests are not sent to Gemini. Gemini errors, timeouts, and rate limits return explicit API errors.
 
 AI reminder drafts are saved as `pending_review` and appear in the existing Reminder Composer. An RM must review and explicitly approve every reminder before scheduling or simulated sending; Gemini cannot approve or send reminders or make KYC, UBO, sanctions, PEP, or credit decisions. Assistant audit records contain request metadata only, not the raw question, model answer, prompt facts, or API key. Automated tests use synthetic SQLite fixtures and a mocked Gemini service; they do not call Google or require a real API key.
@@ -79,4 +81,4 @@ The test suite covers date-derived document status, reminder approval/schedule/s
 
 ## Deploy to Google Cloud
 
-The GitHub Actions workflow in `.github/workflows/ci.yml` runs the application tests, builds the frontend, and verifies that the production Docker image builds on pull requests and pushes to `main`. It does not deploy or require GCP credentials. Follow [CI.md](./CI.md) to connect this project to GitHub and run CI. Cloud Run deployment is a separate later step; see [DEPLOYMENT.md](./DEPLOYMENT.md).
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs the application tests, builds the frontend and Docker image, and validates Terraform on pull requests. The separate `.github/workflows/deploy.yml` runs those same checks before deployment and deploys to Cloud Run only when explicitly enabled after the GCP foundation is configured. Follow [CI.md](./CI.md) for CI and [DEPLOYMENT.md](./DEPLOYMENT.md) for the restricted, synthetic-data-only GCP CD setup.

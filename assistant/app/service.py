@@ -50,10 +50,10 @@ class AssistantService:
                 answer_length = len(answer)
                 return self._response(request_id, answer, sources, context)
 
-            if not self.settings.gemini_api_key:
+            if not self.settings.gemini_configured:
                 raise HTTPException(
                     status_code=503,
-                    detail="Gemini is not configured. Set GEMINI_API_KEY in the server environment and restart the assistant service.",
+                    detail="Gemini is not configured. Set a Gemini API key or configure Vertex AI with a GCP project.",
                 )
 
             model_facts = {key: value for key, value in context["facts"].items() if key != "sources"}
