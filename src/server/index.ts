@@ -546,18 +546,21 @@ app.patch("/api/reminders/:reminderId", (request, response) => {
   const subject = requiredText(request.body.subject, "Subject", 240);
   const body = requiredText(request.body.body, "Message body", 5000);
   const dueDate = requiredText(request.body.dueDate, "Due date", 10);
+  const recipient = typeof request.body.recipient === "string" && request.body.recipient.trim().length > 0
+    ? requiredText(request.body.recipient, "Recipient email", 150)
+    : reminder.recipient;
   const parsedDueDate = /^\d{4}-\d{2}-\d{2}$/.test(dueDate) ? new Date(`${dueDate}T00:00:00.000Z`) : null;
   if (!parsedDueDate || Number.isNaN(parsedDueDate.getTime()) || parsedDueDate.toISOString().slice(0, 10) !== dueDate || dueDate < today()) {
     fail(400, "Due date must be a valid calendar date that is today or later.");
   }
   const timestamp = new Date().toISOString();
-  db.prepare("UPDATE reminders SET subject = ?, body = ?, due_date = ?, updated_at = ? WHERE id = ?").run(
-    subject, body, dueDate, timestamp, reminder.id,
+  db.prepare("UPDATE reminders SET subject = ?, body = ?, due_date = ?, recipient = ?, updated_at = ? WHERE id = ?").run(
+    subject, body, dueDate, recipient, timestamp, reminder.id,
   );
   appendReminderEvent(reminder, {
     eventType: "reminder_edited",
     actor: reminder.created_by,
-    description: "Reminder subject, body, or due date edited before RM approval.",
+    description: "Reminder subject, body, recipient, or due date edited before RM approval.",
   });
   response.json(reminderForClient(requireReminder(reminder.id)));
 });
@@ -742,6 +745,184 @@ app.post("/api/handoffs", (request, response) => {
 
 app.post("/api/scheduler/run-due", (_request, response) => {
   response.json({ completed: completeDueSchedules(), mode: "simulation-only", realEmailEnabled: false });
+});
+
+app.post("/api/cases", (request, response) => {
+  const clientName = requiredText(request.body.clientName ?? request.body.client_name, "Client Name", 150);
+  const legalEntity = requiredText(request.body.legalEntity ?? request.body.legal_entity ?? "Private Limited Company", "Legal Entity", 100);
+  const jurisdiction = requiredText(request.body.jurisdiction ?? "United Kingdom", "Jurisdiction", 100);
+  const rmName = requiredText(request.body.rmName ?? request.body.rm_name ?? "Marcus Vance", "Relationship Manager", 100);
+  const rmEmail = typeof request.body.rmEmail === "string" && request.body.rmEmail.trim()
+    ? request.body.rmEmail.trim()
+    : `${rmName.toLowerCase().replace(/[^a-z0-9]/g, ".")}@northgate.com`;
+  const analystName = requiredText(request.body.analystName ?? request.body.analyst_name ?? "Mina Patel", "Analyst Name", 100);
+  const stage = requiredText(request.body.stage ?? "Chasing Documents", "Stage", 50);
+
+  const year = new Date().getFullYear();
+  const countRow = db.prepare("SELECT COUNT(*) AS count FROM cases").get() as { count?: number } | undefined;
+  const nextNum = 840 + (countRow?.count ? Number(countRow.count) : 1);
+  const caseId = `NG-${year}-${String(nextNum).padStart(4, "0")}`;
+  const now = new Date().toISOString();
+
+  db.exec("BEGIN");
+  try {
+    db.prepare(`
+      INSERT INTO cases (id, client_name, legal_entity, jurisdiction, rm_name, rm_email, analyst_name, stage, stage_days, days_open, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)
+    `).run(caseId, clientName, legalEntity, jurisdiction, rmName, rmEmail, analystName, stage, now);
+
+    insertEvent({
+      caseId,
+      type: "case_created",
+      actor: rmName,
+      description: `New onboarding case opened for ${clientName} (${legalEntity}, ${jurisdiction}).`,
+      metadata: { legalEntity, jurisdiction, stage },
+      occurredAt: now,
+    });
+
+    const initialDocs = Array.isArray(request.body.documents) ? request.body.documents : [];
+    const defaultDueDate = addDays(today(), overdueAfterDays);
+    for (const doc of initialDocs) {
+      const docName = typeof doc === "string" ? doc : (typeof doc === "object" && doc && "name" in doc ? String(doc.name) : "");
+      const category = (typeof doc === "object" && doc && "category" in doc ? String(doc.category) : "") || "Constitutional documents";
+      const owner = (typeof doc === "object" && doc && "owner" in doc && doc.owner === "Internal") ? "Internal" : "Client";
+      const dueDate = (typeof doc === "object" && doc && "dueDate" in doc ? String(doc.dueDate) : "") || defaultDueDate;
+      if (docName.trim().length > 0) {
+        const docId = `doc-${randomUUID().slice(0, 8)}`;
+        db.prepare(`
+          INSERT INTO documents (id, case_id, name, category, owner, state, request_date, due_date, chase_round)
+          VALUES (?, ?, ?, ?, ?, 'requested', ?, ?, 1)
+        `).run(docId, caseId, docName.trim(), category, owner, today(), dueDate);
+      }
+    }
+
+    db.exec("COMMIT");
+  } catch (err) {
+    db.exec("ROLLBACK");
+    throw err;
+  }
+
+  response.status(201).json(getCasePayload(caseId));
+});
+
+app.patch("/api/cases/:caseId", (request, response) => {
+  const clientCase = requireCase(request.params.caseId);
+  const stage = request.body.stage ? requiredText(request.body.stage, "Stage", 50) : clientCase.stage;
+  const rmName = request.body.rmName ? requiredText(request.body.rmName, "Relationship Manager", 100) : clientCase.rm_name;
+  const analystName = request.body.analystName ? requiredText(request.body.analystName, "Analyst Name", 100) : clientCase.analyst_name;
+  const clientName = request.body.clientName ? requiredText(request.body.clientName, "Client Name", 150) : clientCase.client_name;
+  const actor = request.body.actor ? requiredText(request.body.actor, "Actor", 100) : rmName;
+
+  db.prepare(`
+    UPDATE cases SET stage = ?, rm_name = ?, analyst_name = ?, client_name = ? WHERE id = ?
+  `).run(stage, rmName, analystName, clientName, clientCase.id);
+
+  if (stage !== clientCase.stage) {
+    insertEvent({
+      caseId: clientCase.id,
+      type: "case_stage_updated",
+      actor,
+      description: `Case stage transitioned from ${clientCase.stage} to ${stage}.`,
+      metadata: { previousStage: clientCase.stage, newStage: stage },
+    });
+  }
+
+  response.json(getCasePayload(clientCase.id));
+});
+
+app.delete("/api/cases/:caseId", (request, response) => {
+  const clientCase = requireCase(request.params.caseId);
+  db.prepare("DELETE FROM cases WHERE id = ?").run(clientCase.id);
+  response.json({ success: true, deletedCaseId: clientCase.id });
+});
+
+app.post("/api/cases/:caseId/documents", (request, response) => {
+  const clientCase = requireCase(request.params.caseId);
+  const name = requiredText(request.body.name, "Document Name", 200);
+  const category = requiredText(request.body.category ?? "Constitutional documents", "Category", 100);
+  const owner = request.body.owner === "Internal" ? "Internal" : "Client";
+  const dueDate = request.body.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(request.body.dueDate)
+    ? request.body.dueDate
+    : addDays(today(), overdueAfterDays);
+  const actor = request.body.actor ? requiredText(request.body.actor, "Actor", 100) : clientCase.rm_name;
+
+  const docId = `doc-${randomUUID().slice(0, 8)}`;
+  db.prepare(`
+    INSERT INTO documents (id, case_id, name, category, owner, state, request_date, due_date, chase_round)
+    VALUES (?, ?, ?, ?, ?, 'requested', ?, ?, 1)
+  `).run(docId, clientCase.id, name, category, owner, today(), dueDate);
+
+  insertEvent({
+    caseId: clientCase.id,
+    type: "document_requested",
+    actor,
+    description: `New ${owner.toLowerCase()} document item requested: ${name} (Category: ${category}).`,
+    metadata: { documentId: docId, category, owner, dueDate },
+  });
+
+  response.status(201).json(getCasePayload(clientCase.id));
+});
+
+app.delete("/api/documents/:documentId", (request, response) => {
+  const row = db.prepare("SELECT * FROM documents WHERE id = ?").get(request.params.documentId);
+  if (!row) fail(404, "Document item not found.");
+  const doc = documentRow(row);
+  db.prepare("DELETE FROM documents WHERE id = ?").run(doc.id);
+  insertEvent({
+    caseId: doc.case_id,
+    type: "document_deleted",
+    actor: "User",
+    description: `Document item removed from checklist: ${doc.name}.`,
+    metadata: { documentId: doc.id },
+  });
+  response.json(getCasePayload(doc.case_id));
+});
+
+app.get("/api/data/export", (_request, response) => {
+  const allCases = db.prepare("SELECT * FROM cases").all();
+  const allDocs = db.prepare("SELECT * FROM documents").all();
+  const allReminders = db.prepare("SELECT * FROM reminders").all();
+  const allHandoffs = db.prepare("SELECT * FROM handoffs").all();
+  const allEvents = db.prepare("SELECT * FROM case_events").all();
+
+  response.setHeader("Content-Disposition", `attachment; filename="northgate-backup-${today()}.json"`);
+  response.setHeader("Content-Type", "application/json");
+  response.json({
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    cases: allCases,
+    documents: allDocs,
+    reminders: allReminders,
+    handoffs: allHandoffs,
+    events: allEvents,
+  });
+});
+
+app.post("/api/data/import", (request, response) => {
+  const data = request.body;
+  if (!data || !Array.isArray(data.cases) || !Array.isArray(data.documents)) {
+    fail(400, "Invalid backup data format. 'cases' and 'documents' arrays are required.");
+  }
+  db.exec("BEGIN");
+  try {
+    for (const c of data.cases) {
+      db.prepare(`
+        INSERT OR REPLACE INTO cases (id, client_name, legal_entity, jurisdiction, rm_name, rm_email, analyst_name, stage, stage_days, days_open, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(c.id, c.client_name, c.legal_entity, c.jurisdiction, c.rm_name, c.rm_email, c.analyst_name, c.stage, c.stage_days ?? 0, c.days_open ?? 0, c.created_at ?? new Date().toISOString());
+    }
+    for (const d of data.documents) {
+      db.prepare(`
+        INSERT OR REPLACE INTO documents (id, case_id, name, category, owner, state, request_date, due_date, received_at, waived_reason, chase_round)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(d.id, d.case_id, d.name, d.category, d.owner, d.state, d.request_date, d.due_date, d.received_at ?? null, d.waived_reason ?? null, d.chase_round ?? 1);
+    }
+    db.exec("COMMIT");
+  } catch (err) {
+    db.exec("ROLLBACK");
+    throw err;
+  }
+  response.json({ success: true, message: `Imported ${data.cases.length} cases and ${data.documents.length} documents.` });
 });
 
 app.use(express.static(frontendDirectory, { index: false }));

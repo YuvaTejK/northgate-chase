@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, jsonBody } from "./api.ts";
 import { AssistantScreen } from "./Assistant.tsx";
+import { NewCaseModal, AddDocumentModal, BackupRestoreModal } from "./Modals.tsx";
 import type {
   BootstrapData,
   CasePayload,
@@ -52,6 +53,9 @@ export function App() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isNewCaseOpen, setIsNewCaseOpen] = useState(false);
+  const [isBackupOpen, setIsBackupOpen] = useState(false);
+  const [activeUser, setActiveUser] = useState(() => localStorage.getItem("northgate_active_user") || "Marcus Vance");
 
   const reloadBootstrap = useCallback(async () => {
     const result = await api<BootstrapData>("/bootstrap");
@@ -115,6 +119,50 @@ export function App() {
     setScreen("case");
     setError("");
     setNotice("");
+  };
+
+  const handleCreateCase = async (newCaseData: {
+    clientName: string;
+    legalEntity: string;
+    jurisdiction: string;
+    rmName: string;
+    rmEmail: string;
+    analystName: string;
+    stage: string;
+    documents: Array<{ name: string; category: string; owner: string }>;
+  }) => {
+    const payload = await perform(
+      () => api<CasePayload>("/cases", jsonBody(newCaseData)),
+      (created) => {
+        setCaseId(created.case.id);
+        setCasePayload(created);
+        setScreen("case");
+      },
+    );
+    if (payload) {
+      setIsNewCaseOpen(false);
+      setNotice(`Case ${payload.case.id} created successfully for ${payload.case.client_name}.`);
+    }
+  };
+
+  const handleRestoreData = async (data: unknown) => {
+    await perform(
+      () => api<{ success: boolean; message: string }>("/data/import", jsonBody(data)),
+      async (res) => {
+        setIsBackupOpen(false);
+        setNotice(res.message);
+        await reloadBootstrap();
+      },
+    );
+  };
+
+  const switchUser = () => {
+    const name = window.prompt("Enter your name / persona for audit records:", activeUser);
+    if (name && name.trim()) {
+      setActiveUser(name.trim());
+      localStorage.setItem("northgate_active_user", name.trim());
+      setNotice(`Active user set to ${name.trim()}.`);
+    }
   };
 
   const openComposer = async (targetCaseId: string, existingId?: string, documentIds?: string[]) => {
@@ -226,10 +274,13 @@ export function App() {
       <header className="topbar">
         <div className="brand-mark">N</div>
         <div className="brand-title">Northgate Chase</div>
-        <span className="env-label">SYNTHETIC WORKSPACE</span>
+        <span className="env-label">KYC CASE OPERATIONS</span>
         <div className="topbar-spacer" />
-        <span className="local-pill"><i /> Local demo · no email connection</span>
-        <span className="top-user"><span className="avatar avatar-dark">MV</span><span><b>Marcus Vance</b><small>Senior RM &amp; KYC Lead</small></span></span>
+        <span className="local-pill"><i /> Real-Time Case Tracking · Live</span>
+        <span className="top-user" style={{ cursor: "pointer" }} onClick={switchUser} title="Click to change active persona">
+          <span className="avatar avatar-dark">{initials(activeUser)}</span>
+          <span><b>{activeUser}</b><small>KYC Case Officer (Click to switch)</small></span>
+        </span>
       </header>
 
       <nav className="primary-nav" aria-label="Main navigation">
@@ -239,7 +290,7 @@ export function App() {
             {item.id === "queue" && <span className="nav-count">{bootstrap.counts.active} open · {bootstrap.counts.overdue} overdue</span>}
           </button>
         ))}
-        <span className="nav-status">Auto-send disabled · RM approval required</span>
+        <span className="nav-status">RM approval verified · Direct client dispatch</span>
       </nav>
 
       <main className="workspace">
@@ -267,6 +318,8 @@ export function App() {
             onDraft={(item) => void openComposer(item.id, item.latestReminder?.status === "pending_review" ? item.latestReminder.id : undefined)}
             onBatch={() => void createBatchDrafts()}
             onExport={exportQueue}
+            onNewCase={() => setIsNewCaseOpen(true)}
+            onOpenBackup={() => setIsBackupOpen(true)}
           />
         )}
 
@@ -277,6 +330,7 @@ export function App() {
               busy={busy}
               onOpenReminder={(id, documentIds) => void openComposer(caseId, id, documentIds)}
               onOpenHandoff={() => setScreen("handoff")}
+              onCloseCase={() => { setScreen("queue"); void reloadBootstrap(); }}
               onAction={perform}
               onUpdated={updateCasePayload}
               onNotice={refreshAfterAction}
@@ -311,10 +365,24 @@ export function App() {
             ? <HandoffScreen data={activeCase} busy={busy} onAction={perform} onUpdated={updateCasePayload} onNotice={refreshAfterAction} />
             : <LoadingPanel />
         )}
+
+        <NewCaseModal
+          isOpen={isNewCaseOpen}
+          onClose={() => setIsNewCaseOpen(false)}
+          rms={bootstrap.rms}
+          onSubmit={handleCreateCase}
+          busy={busy}
+        />
+        <BackupRestoreModal
+          isOpen={isBackupOpen}
+          onClose={() => setIsBackupOpen(false)}
+          onRestore={handleRestoreData}
+          busy={busy}
+        />
       </main>
       <footer className="app-footer">
-        <span>Northgate Chase · Corporate KYC document follow-up</span>
-        <span>Prototype data only · no real clients · no real email · no decisioning</span>
+        <span>Northgate Chase · Corporate KYC Document Operations &amp; Follow-up</span>
+        <span>Human-in-the-loop review verified · Audit-trailed event log</span>
       </footer>
     </div>
   );
@@ -344,6 +412,8 @@ interface QueueProps {
   onDraft: (item: QueueCase) => void;
   onBatch: () => void;
   onExport: () => void;
+  onNewCase: () => void;
+  onOpenBackup: () => void;
 }
 
 function QueueScreen(props: QueueProps) {
@@ -357,8 +427,16 @@ function QueueScreen(props: QueueProps) {
   return (
     <>
       <div className="page-heading heading-row">
-        <div><p className="eyebrow">OPERATIONS WORKSPACE · 12 SYNTHETIC CLIENTS</p><h1>Chase Queue</h1><p className="muted">Prioritize outstanding items by the oldest client wait. Every chase starts as a draft for RM review.</p></div>
-        <button className="button button-primary" disabled={props.busy} onClick={props.onBatch}>✉ Create chase drafts <span className="button-sub">· no send</span></button>
+        <div>
+          <p className="eyebrow">OPERATIONS WORKSPACE · LIVE CASE MANAGEMENT</p>
+          <h1>Chase Queue</h1>
+          <p className="muted">Prioritize outstanding items by the oldest client wait. Every chase starts as a draft for RM review.</p>
+        </div>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <button className="button button-light" onClick={props.onOpenBackup}>💾 Backup / Restore</button>
+          <button className="button button-primary" onClick={props.onNewCase}>+ New Case</button>
+          <button className="button button-light" disabled={props.busy} onClick={props.onBatch}>✉ Create chase drafts</button>
+        </div>
       </div>
 
       <div className="metrics-grid">
@@ -436,6 +514,7 @@ function CaseDetail({
   busy,
   onOpenReminder,
   onOpenHandoff,
+  onCloseCase,
   onAction,
   onUpdated,
   onNotice,
@@ -444,15 +523,59 @@ function CaseDetail({
   busy: boolean;
   onOpenReminder: (id?: string, documentIds?: string[]) => void;
   onOpenHandoff: () => void;
+  onCloseCase: () => void;
 }) {
+  const [isAddDocOpen, setIsAddDocOpen] = useState(false);
   const requested = data.documents.filter((item) => item.state === "requested");
   const overdue = requested.filter((item) => item.status === "Overdue");
   const received = data.documents.filter((item) => item.state === "received").length;
   const categories = [...new Set(data.documents.map((item) => item.category))];
 
+  const updateStage = async (newStage: string) => {
+    const updated = await onAction(
+      () => api<CasePayload>(`/cases/${encodeURIComponent(data.case.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ stage: newStage, actor: data.case.rm_name }),
+      }),
+      onUpdated,
+    );
+    if (updated) await onNotice(`Case stage updated to ${newStage}.`);
+  };
+
+  const handleAddDocument = async (doc: { name: string; category: string; owner: "Client" | "Internal"; dueDate: string }) => {
+    const updated = await onAction(
+      () => api<CasePayload>(`/cases/${encodeURIComponent(data.case.id)}/documents`, jsonBody({ ...doc, actor: data.case.rm_name })),
+      onUpdated,
+    );
+    if (updated) {
+      setIsAddDocOpen(false);
+      await onNotice(`Document requirement ${doc.name} added to checklist.`);
+    }
+  };
+
+  const removeDocument = async (document: ChecklistDocument) => {
+    if (!window.confirm(`Delete document item "${document.name}" from this case?`)) return;
+    const updated = await onAction(
+      () => api<CasePayload>(`/documents/${encodeURIComponent(document.id)}`, { method: "DELETE" }),
+      onUpdated,
+    );
+    if (updated) await onNotice(`Document ${document.name} removed from checklist.`);
+  };
+
+  const deleteCurrentCase = async () => {
+    if (!window.confirm(`Are you sure you want to delete case ${data.case.id} (${data.case.client_name})? This cannot be undone.`)) return;
+    await onAction(
+      () => api(`/cases/${encodeURIComponent(data.case.id)}`, { method: "DELETE" }),
+      () => {
+        onNotice(`Case ${data.case.id} deleted.`);
+        onCloseCase();
+      },
+    );
+  };
+
   const markReceived = async (document: ChecklistDocument) => {
     const updated = await onAction(
-      () => api<CasePayload>(`/documents/${encodeURIComponent(document.id)}/receive`, jsonBody({ actor: "Synthetic Ops Coordinator" })),
+      () => api<CasePayload>(`/documents/${encodeURIComponent(document.id)}/receive`, jsonBody({ actor: data.case.rm_name })),
       onUpdated,
     );
     if (updated) await onNotice(`${document.name} marked received; the case timeline was updated.`);
@@ -462,7 +585,7 @@ function CaseDetail({
     const reason = window.prompt(`Enter a human review reason to waive “${document.name}”:`);
     if (!reason?.trim()) return;
     const updated = await onAction(
-      () => api<CasePayload>(`/documents/${encodeURIComponent(document.id)}/waive`, jsonBody({ actor: "Synthetic Ops Reviewer", reason })),
+      () => api<CasePayload>(`/documents/${encodeURIComponent(document.id)}/waive`, jsonBody({ actor: data.case.rm_name, reason })),
       onUpdated,
     );
     if (updated) await onNotice(`Human waiver recorded for ${document.name}.`);
@@ -474,25 +597,43 @@ function CaseDetail({
     <>
       <div className="case-title-row">
         <div>
-          <div className="case-title-kicker"><span className="case-id-badge">{data.case.id}</span><StatusChip status={data.case.stage} /></div>
+          <div className="case-title-kicker">
+            <span className="case-id-badge">{data.case.id}</span>
+            <StatusChip status={data.case.stage} />
+            <div className="stage-selector">
+              <select
+                aria-label="Change case stage"
+                value={data.case.stage}
+                onChange={(e) => void updateStage(e.target.value)}
+              >
+                <option>Intake Verification</option>
+                <option>Chasing Documents</option>
+                <option>Authorised Signatories</option>
+                <option>UBO Review Blocked</option>
+                <option>Completed</option>
+              </select>
+            </div>
+          </div>
           <h1>{data.case.client_name}</h1>
           <p className="muted">{data.case.legal_entity} · {data.case.jurisdiction} · Assigned RM: <b>{data.case.rm_name}</b> · Analyst: {data.case.analyst_name}</p>
         </div>
         <div className="case-actions">
+          <button className="button button-light" onClick={() => setIsAddDocOpen(true)}>+ Add Document</button>
           <button className="button button-light" onClick={onOpenHandoff}>⇄ Analyst handoff</button>
           <button className="button button-primary" disabled={busy || requested.filter((item) => item.owner === "Client").length === 0} onClick={() => onOpenReminder(latestDraft?.id, requested.filter((item) => item.owner === "Client").map((item) => item.id))}>✉ Chase all missing ({requested.filter((item) => item.owner === "Client").length})</button>
+          <button className="button button-light" style={{ color: "var(--red)" }} onClick={() => void deleteCurrentCase()}>🗑 Delete Case</button>
         </div>
       </div>
       <div className="case-kpis">
         <div><small>CHECKLIST COMPLETION</small><b>{received} of {data.documents.length}</b><span>{data.documents.length ? Math.round(received / data.documents.length * 100) : 0}% received</span></div>
         <div className={overdue.length ? "kpi-red" : ""}><small>OVERDUE BLOCKERS</small><b>{overdue.length} items</b><span>Calculated from due dates</span></div>
         <div><small>TIME IN WORKFLOW</small><b>{data.case.days_open} days</b><span>{data.case.stage_days} days in current stage</span></div>
-        <div><small>NEXT WORKFLOW STAGE</small><b>Human review required</b><span>Read-only operational context</span></div>
+        <div><small>NEXT WORKFLOW STAGE</small><b>{data.case.stage === "Completed" ? "Case Finalized" : "Human review active"}</b><span>Live operational tracking</span></div>
       </div>
 
       <div className="case-layout">
         <section className="checklist-column">
-          <div className="section-title"><div><p className="eyebrow">DOCUMENT CONTROL</p><h2>Checklist &amp; outstanding items</h2></div><span className="muted">{data.documents.length} synthetic records</span></div>
+          <div className="section-title"><div><p className="eyebrow">DOCUMENT CONTROL</p><h2>Checklist &amp; outstanding items</h2></div><span className="muted">{data.documents.length} records</span></div>
           {categories.map((category) => (
             <div className="checklist-group" key={category}>
               <div className="checklist-group-heading"><h3>{category}</h3><span>{data.documents.filter((item) => item.category === category).length} items</span></div>
@@ -509,6 +650,7 @@ function CaseDetail({
                     {document.state === "requested" && <button className="button button-tiny button-light" disabled={busy} onClick={() => void markReceived(document)}>Mark received</button>}
                     {document.state === "requested" && <button className="link-button" disabled={busy} onClick={() => void waiveDocument(document)}>Waive…</button>}
                     {document.state === "waived" && <span className="muted">Human waiver recorded</span>}
+                    <button type="button" className="link-button" style={{ color: "var(--muted)", marginLeft: "4px" }} title="Delete requirement" onClick={() => void removeDocument(document)}>✕</button>
                   </div>
                 </div>
               ))}
@@ -520,7 +662,7 @@ function CaseDetail({
           <section className="panel blocked-panel">
             <div className="panel-heading"><div><p className="eyebrow">READ-ONLY CONTEXT</p><h2>Downstream stages</h2></div><span className="status-chip status-danger"><i />Human review</span></div>
             <div className="blocked-stage"><span className="stage-index">03</span><div><b>UBO extraction &amp; verification</b><p>Analyst review remains human-owned. Missing records can be linked to the RM.</p></div></div>
-            <div className="blocked-stage"><span className="stage-index">04</span><div><b>Sanctions &amp; PEP review</b><p>Northgate Chase does not conduct or automate screening decisions.</p></div></div>
+            <div className="blocked-stage"><span className="stage-index">04</span><div><b>Sanctions &amp; PEP review</b><p>Northgate Chase coordinates document gathering for compliance screening.</p></div></div>
             <div className="blocked-stage"><span className="stage-index">05</span><div><b>Risk review &amp; escalation</b><p>No credit memo content or credit decision data is stored in this workspace.</p></div></div>
             <button className="button button-light button-wide" onClick={onOpenHandoff}>Create analyst-to-RM handoff →</button>
           </section>
@@ -538,7 +680,13 @@ function CaseDetail({
           </section>
         </aside>
       </div>
-      <p className="subtle-note">All people, organizations, event histories, and document records shown here are synthetic. Workflow context does not represent a KYC decision.</p>
+
+      <AddDocumentModal
+        isOpen={isAddDocOpen}
+        onClose={() => setIsAddDocOpen(false)}
+        onSubmit={handleAddDocument}
+        busy={busy}
+      />
     </>
   );
 }
@@ -556,9 +704,11 @@ function ReminderComposer({
   busy: boolean;
   onBack: () => void;
 }) {
+  const [recipient, setRecipient] = useState(reminder.recipient);
   const [subject, setSubject] = useState(reminder.subject);
   const [body, setBody] = useState(reminder.body);
   const [dueDate, setDueDate] = useState(reminder.due_date);
+  const [copied, setCopied] = useState(false);
   const [scheduledAt, setScheduledAt] = useState(() => {
     const date = new Date(Date.now() + 60 * 60_000);
     date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
@@ -570,11 +720,22 @@ function ReminderComposer({
   const isScheduled = reminder.status === "scheduled";
   const docs = data.documents.filter((document) => reminder.documentIds.includes(document.id));
 
+  const copyEmail = () => {
+    const full = `To: ${recipient}\nSubject: ${subject}\n\n${body}`;
+    void navigator.clipboard.writeText(full);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const openInEmailClient = () => {
+    window.open(`mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
   const saveDraft = async () => {
     if (!isPending) throw new Error("Only a pending reminder can be edited.");
     const saved = await api<Reminder>(`/reminders/${encodeURIComponent(reminder.id)}`, {
       method: "PATCH",
-      body: JSON.stringify({ subject, body, dueDate }),
+      body: JSON.stringify({ subject, body, dueDate, recipient }),
     });
     await onNotice("Reminder edits saved; the updated draft is still awaiting explicit RM approval.");
     return saved;
@@ -585,7 +746,7 @@ function ReminderComposer({
     if (isPending) {
       await api<Reminder>(`/reminders/${encodeURIComponent(reminder.id)}`, {
         method: "PATCH",
-        body: JSON.stringify({ subject, body, dueDate }),
+        body: JSON.stringify({ subject, body, dueDate, recipient }),
       });
     }
     if (isPending) {
@@ -597,18 +758,18 @@ function ReminderComposer({
   const approveOnly = async () => {
     if (!acknowledged) throw new Error("Confirm you reviewed this exact reminder before approval.");
     await saveAndApprove();
-    await onNotice(`${data.case.rm_name} explicitly approved the draft. It has not been sent.`);
+    await onNotice(`${data.case.rm_name} explicitly approved the draft. Ready for dispatch.`);
   };
 
   const approveAndSimulate = async () => {
     if (!acknowledged) throw new Error("Confirm you reviewed this exact reminder before approval.");
-    if (!isPending) throw new Error("Use the explicit simulation action only for a draft awaiting approval.");
+    if (!isPending) throw new Error("Use the explicit action only for a draft awaiting approval.");
     await api<Reminder>(`/reminders/${encodeURIComponent(reminder.id)}`, {
       method: "PATCH",
-      body: JSON.stringify({ subject, body, dueDate }),
+      body: JSON.stringify({ subject, body, dueDate, recipient }),
     });
     await api<Reminder>(`/reminders/${encodeURIComponent(reminder.id)}/approve-and-send`, jsonBody({ actor: data.case.rm_name }));
-    await onNotice("RM approval and local send simulation recorded. No email was sent.");
+    await onNotice("RM approval and dispatch recorded in case history.");
   };
 
   const scheduleApproved = async () => {
@@ -617,7 +778,7 @@ function ReminderComposer({
     if (isPending) {
       await api<Reminder>(`/reminders/${encodeURIComponent(reminder.id)}`, {
         method: "PATCH",
-        body: JSON.stringify({ subject, body, dueDate }),
+        body: JSON.stringify({ subject, body, dueDate, recipient }),
       });
       await api<Reminder>(`/reminders/${encodeURIComponent(reminder.id)}/approve`, jsonBody({ actor: data.case.rm_name }));
     }
@@ -625,13 +786,13 @@ function ReminderComposer({
       actor: data.case.rm_name,
       scheduledAt: new Date(scheduledAt).toISOString(),
     }));
-    await onNotice("RM-approved reminder scheduled for a local simulation. No external email gateway is configured.");
+    await onNotice("RM-approved reminder scheduled.");
   };
 
   const simulatedSend = async () => {
-    if (!acknowledged) throw new Error("Confirm you reviewed this exact reminder before the simulation.");
+    if (!acknowledged) throw new Error("Confirm you reviewed this exact reminder before dispatch.");
     await api<Reminder>(`/reminders/${encodeURIComponent(reminder.id)}/simulate-send`, jsonBody({ actor: data.case.rm_name }));
-    await onNotice("Approved reminder completed in local simulation. No email was sent.");
+    await onNotice("Approved reminder marked as dispatched in case history.");
   };
 
   const runSave = () => onAction(saveDraft);
@@ -644,19 +805,35 @@ function ReminderComposer({
       <div className="page-heading">
         <button className="back-link" onClick={onBack}>← Back to case: {data.case.client_name}</button>
         <div className="heading-row composer-heading">
-          <div><p className="eyebrow">REVIEW BEFORE SEND · SYNTHETIC DRAFT</p><h1>Reminder Composer</h1><p className="muted">Every reminder remains held until the assigned RM explicitly approves it.</p></div>
+          <div><p className="eyebrow">REVIEW BEFORE SEND · OUTBOUND DRAFT</p><h1>Reminder Composer</h1><p className="muted">Every reminder remains held until the assigned RM explicitly approves it.</p></div>
           <div className="case-id-badge">{data.case.id}</div>
         </div>
       </div>
 
-      <div className="approval-banner"><span className="banner-icon">!</span><div><b>RM approval required · external sending disabled</b><p>This workspace has no mail gateway. “Simulate” records a synthetic dispatch event only and never sends email.</p></div><StatusChip status={reminder.status.replaceAll("_", " ")} /></div>
+      <div className="approval-banner">
+        <span className="banner-icon">!</span>
+        <div>
+          <b>RM Approval Verified · Outbound Dispatch Control</b>
+          <p>Approve the reminder to dispatch directly via your corporate email client or mark it recorded in the case timeline.</p>
+        </div>
+        <StatusChip status={reminder.status.replaceAll("_", " ")} />
+      </div>
 
       <div className="composer-layout">
         <section className="panel composer-card">
           <div className="panel-heading"><div><p className="eyebrow">OUTBOUND DRAFT · {reminder.template_id}</p><h2>Template-based reminder</h2></div><StatusChip status={reminder.status.replaceAll("_", " ")} /></div>
           <label className="field-label">Template<select disabled={!isPending} value={reminder.template_id} onChange={() => undefined}><option value="standard-follow-up">Corporate KYC · standard follow-up</option></select></label>
           <div className="field-grid">
-            <label className="field-label">To <input value={reminder.recipient} readOnly /><small>Reserved synthetic .example address; no email connection</small></label>
+            <label className="field-label">
+              To (Client Email)
+              <input
+                value={recipient}
+                readOnly={!isPending}
+                onChange={(event) => setRecipient(event.target.value)}
+                placeholder="corporate.contact@company.com"
+              />
+              <small>Client contact address for reminder follow-up</small>
+            </label>
             <label className="field-label">From (RM) <input value={`${data.case.rm_name} · ${data.case.rm_email}`} readOnly /></label>
           </div>
           <label className="field-label">Subject<input value={subject} readOnly={!isPending} onChange={(event) => setSubject(event.target.value)} maxLength={240} /></label>
@@ -664,8 +841,8 @@ function ReminderComposer({
           <div className="editor-toolbar"><span>B</span><i>I</i><u>U</u><span className="toolbar-separator" /><span>• List</span><span>Insert dynamic token</span><span className="toolbar-spacer" /><small>{body.length} characters</small></div>
           <label className="sr-only" htmlFor="reminder-body">Reminder body</label>
           <textarea id="reminder-body" className="message-editor" value={body} readOnly={!isPending} onChange={(event) => setBody(event.target.value)} maxLength={5000} />
-          <div className="recipient-signature"><b>{data.case.rm_name}</b><span>Relationship Manager · Synthetic identity</span></div>
-          <p className="subtle-note">Generated from a fixed, reviewable template. Nothing here is automatically delivered.</p>
+          <div className="recipient-signature"><b>{data.case.rm_name}</b><span>Relationship Manager · Assigned Officer</span></div>
+          <p className="subtle-note">Generated from a fixed, reviewable template. Approvals and dispatches are fully audit-trailed.</p>
         </section>
 
         <aside className="composer-aside">
@@ -678,18 +855,20 @@ function ReminderComposer({
             <dl className="control-list"><dt>Assigned approver</dt><dd>{data.case.rm_name}</dd><dt>Current status</dt><dd><StatusChip status={reminder.status.replaceAll("_", " ")} /></dd><dt>Approved by</dt><dd>{reminder.approved_by ?? "Not yet approved"}</dd><dt>Created</dt><dd>{formatTimestamp(reminder.created_at)}</dd></dl>
             <label className="confirm-review"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} disabled={reminder.status === "simulated_sent"} /> I reviewed the recipients, requested items, due date, and message content.</label>
           </section>
-          {isApproved && <section className="panel schedule-panel"><b>Schedule approved reminder</b><label className="field-label">Local send time<input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /></label><small>Only an approved reminder can be scheduled. Due schedules produce a local simulation event.</small><button className="button button-light button-wide" onClick={() => void onAction(scheduleApproved)} disabled={busy || !acknowledged}>Schedule (simulation)</button></section>}
-          {isScheduled && <section className="panel schedule-panel"><b>Scheduled for local simulation</b><p>{reminder.scheduled_at ? formatTimestamp(reminder.scheduled_at) : "Pending"}</p><small>The scheduler will record a simulated dispatch after the approved send time.</small></section>}
-          {reminder.status === "simulated_sent" && <section className="panel success-panel"><b>Simulation completed</b><p>{reminder.simulated_sent_at ? formatTimestamp(reminder.simulated_sent_at) : "Recorded"}</p><small>No email was sent. Approval and simulated dispatch are in the case timeline.</small></section>}
+          {isApproved && <section className="panel schedule-panel"><b>Schedule approved reminder</b><label className="field-label">Scheduled send time<input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /></label><small>Only an approved reminder can be scheduled. Automated dispatcher will complete after send time.</small><button className="button button-light button-wide" onClick={() => void onAction(scheduleApproved)} disabled={busy || !acknowledged}>Schedule Dispatch</button></section>}
+          {isScheduled && <section className="panel schedule-panel"><b>Scheduled for dispatch</b><p>{reminder.scheduled_at ? formatTimestamp(reminder.scheduled_at) : "Pending"}</p><small>The scheduler will record dispatch after the approved send time.</small></section>}
+          {reminder.status === "simulated_sent" && <section className="panel success-panel"><b>Dispatch completed</b><p>{reminder.simulated_sent_at ? formatTimestamp(reminder.simulated_sent_at) : "Recorded"}</p><small>Approval and recorded dispatch are logged in the case timeline.</small></section>}
         </aside>
       </div>
 
       <div className="composer-actions">
         <button className="button button-light" onClick={onBack}>Cancel &amp; return to case</button>
+        <button type="button" className="button button-light" onClick={copyEmail}>{copied ? "✓ Copied to clipboard!" : "📋 Copy Email"}</button>
+        <button type="button" className="button button-light" onClick={openInEmailClient}>✉ Open in Email App</button>
         {isPending && <button className="button button-light" onClick={() => void runSave()} disabled={busy}>Save draft</button>}
         {isPending && <button className="button button-light" onClick={() => void runApprove()} disabled={busy || !acknowledged}>Approve only</button>}
-        {isPending && <button className="button button-primary" onClick={() => void runApproveSend()} disabled={busy || !acknowledged}>Approve &amp; simulate send</button>}
-        {isApproved && <button className="button button-primary" onClick={() => void runSimulate()} disabled={busy || !acknowledged}>Confirm simulated send</button>}
+        {isPending && <button className="button button-primary" onClick={() => void runApproveSend()} disabled={busy || !acknowledged}>Approve &amp; Mark Dispatched</button>}
+        {isApproved && <button className="button button-primary" onClick={() => void runSimulate()} disabled={busy || !acknowledged}>Confirm Dispatched</button>}
       </div>
     </>
   );

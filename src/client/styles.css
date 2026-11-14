@@ -431,3 +431,77 @@ tbody tr:last-child td { border-bottom: 0; }
   .assistant-composer-footer .button { align-self: flex-end; }
   .ai-draft-card { align-items: flex-start; flex-direction: column; }
 }
+
+/* Real User Modals & Actions */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 30, 54, 0.6);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.modal-dialog {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #f8fafc;
+}
+.modal-header h2 {
+  font-size: 15px;
+  margin: 0;
+  color: var(--navy);
+}
+.modal-close {
+  background: transparent;
+  border: 0;
+  font-size: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.modal-close:hover {
+  color: var(--navy);
+}
+.modal-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  background: #f8fafc;
+}
+.stage-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stage-selector select {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+}
