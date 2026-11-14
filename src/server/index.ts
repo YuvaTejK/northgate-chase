@@ -759,9 +759,16 @@ app.post("/api/cases", (request, response) => {
   const stage = requiredText(request.body.stage ?? "Chasing Documents", "Stage", 50);
 
   const year = new Date().getFullYear();
-  const countRow = db.prepare("SELECT COUNT(*) AS count FROM cases").get() as { count?: number } | undefined;
-  const nextNum = 840 + (countRow?.count ? Number(countRow.count) : 1);
-  const caseId = `NG-${year}-${String(nextNum).padStart(4, "0")}`;
+  const rows = db.prepare("SELECT id FROM cases WHERE id LIKE ?").all(`NG-${year}-%`) as Array<{ id: string }>;
+  let maxNum = 840;
+  for (const r of rows) {
+    const parts = r.id.split("-");
+    const num = parseInt(parts[2], 10);
+    if (!Number.isNaN(num) && num > maxNum) {
+      maxNum = num;
+    }
+  }
+  const caseId = `NG-${year}-${String(maxNum + 1).padStart(4, "0")}`;
   const now = new Date().toISOString();
 
   db.exec("BEGIN");
